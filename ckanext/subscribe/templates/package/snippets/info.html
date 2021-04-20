@@ -19,7 +19,10 @@
     <div class="nums">
       {% import 'macros/form.html' as form %}
       <!-- {{ form.errors(error_summary) }} -->
-      <label class="control-label" for="subscribe-email">{{ _('Sign up for email updates') }}</label>
+      <label class="control-label subscribe-label" for="subscribe-email">
+        <i class="fa fa-question-circle icon-question-sign muted" title="Receive email updates for this dataset or log in and follow this dataset." data-toggle="tooltip"></i>
+        {{ _(' Sign up for email updates:') }}
+      </label>
       <form method='post' action="{{ h.url_for('/subscribe/signup') }}" id="subscribe-form" enctype="multipart/form-data" class="form-inline">
         <!-- (Bootstrap 3) <div class="form-group input-group-sm"> -->
           <input id="subscribe-email" type="email" name="email" class="form-control input-small" value="" placeholder="Email Address"  required />

@@ -47,3 +47,7 @@ table#subscriptions {
 #subscriptions select#frequency {
     width: 120px;
 }
+
+label::after {
+    content: "";
+}
