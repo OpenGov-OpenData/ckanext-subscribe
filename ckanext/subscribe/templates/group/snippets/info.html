@@ -19,16 +19,17 @@
     <div class="nums">
       {% import 'macros/form.html' as form %}
       <!-- {{ form.errors(error_summary) }} -->
-      <label class="control-label" for="subscribe-email" title="Receive email updates for this group without needing to login." aria-label="Receive email updates for this group without needing to login.">
-        {{ _('Sign up for email updates') }}
-      </label>
+      <label class="control-label"
+             for="subscribe-email"
+             title="Receive email updates for this group without needing to login."
+             aria-label="Receive email updates for this group without needing to login.">{{ _('Sign up for email updates') }}</label>
       <form method='post' action="{{ h.url_for('/subscribe/signup') }}" id="subscribe-form" enctype="multipart/form-data" class="form-inline">
         <!-- (Bootstrap 3) <div class="form-group input-group-sm"> -->
           <input id="subscribe-email" type="email" name="email" class="form-control input-small" value="" placeholder="Email Address" required />
           <input id="subscribe-group" type="hidden" name="group" value="{{ group.name }}"` />
           <input id="subscribe-group-title" type="hidden" name="group-title" value="{{ group.title }}"` />
         <!-- </div> -->
-        <button type="submit"  class="btn btn-primary round-corner-btn" name="save">{{ _('Subscribe Now') }}</button>
+        <button type="submit" class="btn btn-primary round-corner-btn" name="save">{{ _('Subscribe Now') }}</button>
       </form>
     </div>
   {% endif %}
