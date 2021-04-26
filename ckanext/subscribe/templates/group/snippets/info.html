@@ -19,9 +19,8 @@
     <div class="nums">
       {% import 'macros/form.html' as form %}
       <!-- {{ form.errors(error_summary) }} -->
-      <label class="control-label subscribe-label" for="subscribe-email">
-        <i class="fa fa-question-circle icon-question-sign muted" title="Receive email updates for this group or log in to follow." data-toggle="tooltip"></i>
-        {{ _('Sign up for email updates:') }}
+      <label class="control-label" for="subscribe-email" title="Receive email updates for this group without needing to login." aria-label="Receive email updates for this group without needing to login.">
+        {{ _('Sign up for email updates') }}
       </label>
       <form method='post' action="{{ h.url_for('/subscribe/signup') }}" id="subscribe-form" enctype="multipart/form-data" class="form-inline">
         <!-- (Bootstrap 3) <div class="form-group input-group-sm"> -->
