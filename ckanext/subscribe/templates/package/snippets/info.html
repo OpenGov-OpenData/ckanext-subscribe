@@ -13,7 +13,11 @@
 {% endblock %}
 {% block follow_button %}
   {% if c.user %}
-    {{ super() }}
+    {% if not hide_follow_button %}
+      <div class="follow_button" title="Follow this dataset to receive email updates." aria-label="Follow this dataset to receive email updates.">
+        {{ h.follow_button('dataset', pkg.id) }}
+      </div>
+      {% endif %}
   {% else %}
     {% resource 'subscribe/subscribe.css' %}
     <div class="nums">

@@ -13,7 +13,9 @@
 {% endblock %}
 {% block follow %}
   {% if c.user %}
-    {{ super() }}
+    <div class="follow_button" title="Follow this organization to receive email updates." aria-label="Follow this organization to receive email updates.">
+       {{ h.follow_button('group', organization.id) }}
+    </div> 
   {% else %}
     {% resource 'subscribe/subscribe.css' %}
     <div class="nums">
