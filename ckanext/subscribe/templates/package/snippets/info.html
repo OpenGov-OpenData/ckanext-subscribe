@@ -14,7 +14,7 @@
 {% block follow_button %}
   {% if c.user %}
     {% if not hide_follow_button %}
-      <div class="follow_button" title="Follow this dataset to receive email updates." aria-label="Follow this dataset to receive email updates.">
+      <div class="follow_button" title="Follow to be notified of changes to this dataset and receive email updates if enabled in user settings." aria-label="Follow to be notified of changes to this dataset and receive email updates if enabled in user settings.">
         {{ h.follow_button('dataset', pkg.id) }}
       </div>
       {% endif %}
