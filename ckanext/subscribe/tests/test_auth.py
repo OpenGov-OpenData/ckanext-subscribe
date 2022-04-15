@@ -1,12 +1,13 @@
 # encoding: utf-8
 
-from nose.tools import assert_raises, assert_in
+import pytest
 
 from ckan.tests import helpers
 from ckan.tests import factories
 from ckan import logic, model
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestSubscribeSignupToDataset(object):
 
     def setup(self):
@@ -17,11 +18,10 @@ class TestSubscribeSignupToDataset(object):
         context = {'model': model}
         context['user'] = ''
 
-        with assert_raises(logic.NotAuthorized) as cm:
+        with pytest.raises(logic.NotAuthorized) as cm:
             helpers.call_auth('subscribe_signup', context=context,
                               dataset_id=dataset['name'])
-        assert_in('not authorized to read package',
-                  cm.exception.message)
+            assert 'not authorized to read package' in cm.exception.message
 
     def test_deleted_dataset_not_subscribable(self):
         factories.User(name='fred')
@@ -29,11 +29,10 @@ class TestSubscribeSignupToDataset(object):
         context = {'model': model}
         context['user'] = 'fred'
 
-        with assert_raises(logic.NotAuthorized) as cm:
+        with pytest.raises(logic.NotAuthorized) as cm:
             helpers.call_auth('subscribe_signup', context=context,
                               dataset_id=dataset['name'])
-        assert_in('User fred not authorized to read package',
-                  cm.exception.message)
+            assert 'User fred not authorized to read package' in cm.exception.message
 
     def test_private_dataset_is_subscribable_to_editor(self):
         fred = factories.User(name='fred')
@@ -54,11 +53,10 @@ class TestSubscribeSignupToDataset(object):
         context = {'model': model}
         context['user'] = 'fred'
 
-        with assert_raises(logic.NotAuthorized) as cm:
+        with pytest.raises(logic.NotAuthorized) as cm:
             helpers.call_auth('subscribe_signup', context=context,
                               dataset_id=dataset['name'])
-        assert_in('User fred not authorized to read package',
-                  cm.exception.message)
+            assert 'User fred not authorized to read package' in cm.exception.message
 
     def test_admin_cant_skip_verification(self):
         # (only sysadmin can)
@@ -69,12 +67,11 @@ class TestSubscribeSignupToDataset(object):
         context = {'model': model}
         context['user'] = 'fred'
 
-        with assert_raises(logic.NotAuthorized) as cm:
+        with pytest.raises(logic.NotAuthorized) as cm:
             helpers.call_auth('subscribe_signup', context=context,
                               dataset_id=dataset['name'],
                               skip_verification=True)
-        assert_in('Not authorized to skip verification',
-                  cm.exception.message)
+            assert 'Not authorized to skip verification' in cm.exception.message
 
 
 class TestSubscribeListSubscriptions(object):
@@ -90,7 +87,7 @@ class TestSubscribeListSubscriptions(object):
         context = {'model': model}
         context['user'] = 'fred'
 
-        with assert_raises(logic.NotAuthorized):
+        with pytest.raises(logic.NotAuthorized):
             helpers.call_auth('subscribe_list_subscriptions', context=context,
                               email=fred['email'])
 
@@ -108,6 +105,6 @@ class TestSubscribeUnsubscribe(object):
         context = {'model': model}
         context['user'] = 'fred'
 
-        with assert_raises(logic.NotAuthorized):
+        with pytest.raises(logic.NotAuthorized):
             helpers.call_auth('subscribe_unsubscribe', context=context,
                               email=fred['email'])

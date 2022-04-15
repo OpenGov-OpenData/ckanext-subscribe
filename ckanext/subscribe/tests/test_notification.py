@@ -1,10 +1,9 @@
 # encoding: utf-8
 
 import datetime
-from pprint import pprint
 
+import pytest
 import mock
-from nose.tools import assert_equal, assert_in
 
 from ckan.tests import helpers
 from ckan.tests.factories import Dataset, Organization, Group
@@ -26,9 +25,8 @@ from ckanext.subscribe.notification import (
 from ckanext.subscribe import notification as subscribe_notification
 from ckanext.subscribe.tests import factories
 
-eq = assert_equal
 
-
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestSendAnyImmediateNotifications(object):
 
     def setup(self):
@@ -44,17 +42,17 @@ class TestSendAnyImmediateNotifications(object):
 
         send_notification_email.assert_called_once()
         code, email, notifications = send_notification_email.call_args[0]
-        eq(type(code), type(u''))
-        eq(email, 'bob@example.com')
-        eq(len(notifications), 1)
-        eq([(a['activity_type'], a['data']['package']['id'])
-            for a in notifications[0]['activities']],
-           [('new package', dataset['id'])])
-        eq(notifications[0]['subscription']['id'], subscription['id'])
+        assert type(code), type(u'')
+        assert email, 'bob@example.com'
+        assert len(notifications), 1
+        assert [(a['activity_type'], a['data']['package']['id'])
+                for a in notifications[0]['activities']], [('new package', dataset['id'])]
+        assert notifications[0]['subscription']['id'], subscription['id']
         assert time_since_emails_last_sent(Frequency.IMMEDIATE.value) \
             < datetime.timedelta(seconds=1)
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestGetImmediateNotifications(object):
 
     def setup(self):
@@ -69,10 +67,8 @@ class TestGetImmediateNotifications(object):
 
         notifies = get_immediate_notifications()
 
-        eq(notifies.keys(),
-           [subscription['email']])
-        eq(_get_activities(notifies),
-           [('bob@example.com', 'new package', dataset['id'])])
+        assert notifies.keys(), [subscription['email']]
+        assert _get_activities(notifies), [('bob@example.com', 'new package', dataset['id'])]
 
     def test_subscribe_to_an_org_and_its_dataset_has_activity(self):
         org = Organization()
@@ -84,10 +80,8 @@ class TestGetImmediateNotifications(object):
 
         notifies = get_immediate_notifications()
 
-        eq(notifies.keys(),
-           [subscription['email']])
-        eq(_get_activities(notifies),
-           [('bob@example.com', 'new package', dataset['id'])])
+        assert notifies.keys(), [subscription['email']]
+        assert _get_activities(notifies), [('bob@example.com', 'new package', dataset['id'])]
 
     def test_subscribe_to_an_group_and_its_dataset_has_activity(self):
         group = Group()
@@ -99,10 +93,8 @@ class TestGetImmediateNotifications(object):
 
         notifies = get_immediate_notifications()
 
-        eq(notifies.keys(),
-           [subscription['email']])
-        eq(_get_activities(notifies),
-           [('bob@example.com', 'new package', dataset['id'])])
+        assert notifies.keys(), [subscription['email']]
+        assert _get_activities(notifies), [('bob@example.com', 'new package', dataset['id'])]
 
     def test_old_activity_not_notified(self):
         dataset = factories.DatasetActivity(
@@ -111,7 +103,7 @@ class TestGetImmediateNotifications(object):
 
         notifies = get_immediate_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_activity_already_notified_not_notified_again(self):
         dataset = factories.DatasetActivity(
@@ -124,7 +116,7 @@ class TestGetImmediateNotifications(object):
 
         notifies = get_immediate_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_activity_before_the_subscription_is_not_notified(self):
         dataset = Dataset()
@@ -137,9 +129,7 @@ class TestGetImmediateNotifications(object):
 
         notifies = get_immediate_notifications()
 
-        eq(_get_activities(notifies), [
-            ('bob@example.com', 'changed package', dataset['id'])
-        ])
+        assert _get_activities(notifies), [('bob@example.com', 'changed package', dataset['id'])]
 
     def test_lots_of_users_and_datasets(self):
         datasetx = _create_dataset_and_activity([70, 50, 10])
@@ -157,21 +147,18 @@ class TestGetImmediateNotifications(object):
 
         notifies = get_immediate_notifications()
 
-        eq(set(notifies.keys()),
-           set(('user@a.com', 'user@b.com', 'user@b.com')))
+        assert set(notifies.keys()), set(('user@a.com', 'user@b.com', 'user@b.com'))
 
-        pprint(_get_activities(notifies))
-        eq(set(_get_activities(notifies)),
-           set((
-                ('user@a.com', 'new package', datasetx['id']),
-                ('user@a.com', 'changed package', datasetx['id']),
-                ('user@a.com', 'changed package', datasetx['id']),
-                ('user@b.com', 'new package', datasetx['id']),
-                ('user@b.com', 'changed package', datasetx['id']),
-                ('user@b.com', 'changed package', datasetx['id']),
-                ('user@b.com', 'new package', datasety['id']),
-                ('user@b.com', 'changed package', datasety['id']),
-               )))
+        assert set(_get_activities(notifies)), {(
+            ('user@a.com', 'new package', datasetx['id']),
+            ('user@a.com', 'changed package', datasetx['id']),
+            ('user@a.com', 'changed package', datasetx['id']),
+            ('user@b.com', 'new package', datasetx['id']),
+            ('user@b.com', 'changed package', datasetx['id']),
+            ('user@b.com', 'changed package', datasetx['id']),
+            ('user@b.com', 'new package', datasety['id']),
+            ('user@b.com', 'changed package', datasety['id']),
+        )}
 
     def test_weekly_frequency_subscriptions_are_not_included(self):
         dataset = factories.DatasetActivity()
@@ -179,7 +166,7 @@ class TestGetImmediateNotifications(object):
 
         notifies = get_immediate_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
 
 def _create_dataset_and_activity(activity_in_minutes_ago=()):
@@ -196,6 +183,7 @@ def _create_dataset_and_activity(activity_in_minutes_ago=()):
     return dataset
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestSendWeeklyNotificationsIfItsTimeTo(object):
 
     def setup(self):
@@ -214,12 +202,10 @@ class TestSendWeeklyNotificationsIfItsTimeTo(object):
         code, email, notifications = send_notification_email.call_args[0]
         assert email, 'bob@example.com'
         assert len(notifications), 1
-        eq([(a['activity_type'], a['data']['package']['id'])
-            for a in notifications[0]['activities']],
-           [('new package', dataset['id'])])
-        eq(notifications[0]['subscription']['id'], subscription['id'])
-        assert time_since_emails_last_sent(Frequency.WEEKLY.value) \
-            < datetime.timedelta(seconds=1)
+        assert [(a['activity_type'], a['data']['package']['id'])
+                for a in notifications[0]['activities']], [('new package', dataset['id'])]
+        assert notifications[0]['subscription']['id'], subscription['id']
+        assert time_since_emails_last_sent(Frequency.WEEKLY.value) < datetime.timedelta(seconds=1)
 
     @mock.patch('ckanext.subscribe.notification_email.send_notification_email')
     def test_no_emails_to_send_but_week_is_marked_done(self, send_notification_email):
@@ -227,10 +213,10 @@ class TestSendWeeklyNotificationsIfItsTimeTo(object):
         send_weekly_notifications_if_its_time_to()
 
         send_notification_email.assert_not_called()
-        assert time_since_emails_last_sent(Frequency.WEEKLY.value) \
-            < datetime.timedelta(seconds=1)
+        assert time_since_emails_last_sent(Frequency.WEEKLY.value) < datetime.timedelta(seconds=1)
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestGetWeeklyNotifications(object):
 
     def setup(self):
@@ -246,10 +232,8 @@ class TestGetWeeklyNotifications(object):
 
         notifies = get_weekly_notifications()
 
-        eq(notifies.keys(),
-           [subscription['email']])
-        eq(_get_activities(notifies),
-           [('bob@example.com', 'new package', dataset['id'])])
+        assert notifies.keys(), [subscription['email']]
+        assert _get_activities(notifies), [('bob@example.com', 'new package', dataset['id'])]
 
     def test_daily_frequency_subscriptions_are_not_included(self):
         dataset = factories.DatasetActivity()
@@ -257,7 +241,7 @@ class TestGetWeeklyNotifications(object):
 
         notifies = get_weekly_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_daily_frequency_subscriptions_of_an_org_are_not_included(self):
         org = Organization()
@@ -267,7 +251,7 @@ class TestGetWeeklyNotifications(object):
 
         notifies = get_weekly_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_immediate_frequency_subscriptions_are_not_included(self):
         dataset = factories.DatasetActivity()
@@ -275,7 +259,7 @@ class TestGetWeeklyNotifications(object):
 
         notifies = get_weekly_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_immediate_frequency_subscriptions_of_an_group_are_not_included(self):
         group = Group()
@@ -285,7 +269,7 @@ class TestGetWeeklyNotifications(object):
 
         notifies = get_weekly_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_activities_older_than_a_week_are_not_notified(self):
         dataset = factories.DatasetActivity(
@@ -295,7 +279,7 @@ class TestGetWeeklyNotifications(object):
 
         notifies = get_weekly_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_activities_already_notified_are_not_notified_again(self):
         dataset = factories.DatasetActivity(
@@ -309,9 +293,10 @@ class TestGetWeeklyNotifications(object):
 
         notifies = get_weekly_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestSendDailyNotificationsIfItsTimeTo(object):
 
     def setup(self):
@@ -328,15 +313,13 @@ class TestSendDailyNotificationsIfItsTimeTo(object):
 
         send_notification_email.assert_called_once()
         code, email, notifications = send_notification_email.call_args[0]
-        eq(type(code), type(u''))
-        eq(email, 'bob@example.com')
-        eq(len(notifications), 1)
-        eq([(a['activity_type'], a['data']['package']['id'])
-            for a in notifications[0]['activities']],
-           [('new package', dataset['id'])])
-        eq(notifications[0]['subscription']['id'], subscription['id'])
-        assert time_since_emails_last_sent(Frequency.DAILY.value) \
-            < datetime.timedelta(seconds=1)
+        assert type(code), type(u'')
+        assert email, 'bob@example.com'
+        assert len(notifications), 1
+        assert [(a['activity_type'], a['data']['package']['id'])
+                for a in notifications[0]['activities']], [('new package', dataset['id'])]
+        assert notifications[0]['subscription']['id'], subscription['id']
+        assert time_since_emails_last_sent(Frequency.DAILY.value) < datetime.timedelta(seconds=1)
 
     @mock.patch('ckanext.subscribe.notification_email.send_notification_email')
     def test_no_emails_to_send_but_day_is_marked_done(self, send_notification_email):
@@ -344,10 +327,10 @@ class TestSendDailyNotificationsIfItsTimeTo(object):
         send_daily_notifications_if_its_time_to()
 
         send_notification_email.assert_not_called()
-        assert time_since_emails_last_sent(Frequency.DAILY.value) \
-            < datetime.timedelta(seconds=1)
+        assert time_since_emails_last_sent(Frequency.DAILY.value) < datetime.timedelta(seconds=1)
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestGetDailyNotifications(object):
 
     def setup(self):
@@ -363,10 +346,8 @@ class TestGetDailyNotifications(object):
 
         notifies = get_daily_notifications()
 
-        eq(notifies.keys(),
-           [subscription['email']])
-        eq(_get_activities(notifies),
-           [('bob@example.com', 'new package', dataset['id'])])
+        assert notifies.keys(), [subscription['email']]
+        assert _get_activities(notifies), [('bob@example.com', 'new package', dataset['id'])]
 
     def test_weekly_frequency_subscriptions_are_not_included(self):
         dataset = factories.DatasetActivity()
@@ -374,7 +355,7 @@ class TestGetDailyNotifications(object):
 
         notifies = get_daily_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_immediate_frequency_subscriptions_are_not_included(self):
         dataset = factories.DatasetActivity()
@@ -382,7 +363,7 @@ class TestGetDailyNotifications(object):
 
         notifies = get_daily_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_activities_older_than_a_day_are_not_notified(self):
         dataset = factories.DatasetActivity(
@@ -392,7 +373,7 @@ class TestGetDailyNotifications(object):
 
         notifies = get_daily_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
     def test_activities_already_notified_are_not_notified_again(self):
         dataset = factories.DatasetActivity(
@@ -406,7 +387,7 @@ class TestGetDailyNotifications(object):
 
         notifies = get_daily_notifications()
 
-        eq(_get_activities(notifies), [])
+        assert not _get_activities(notifies)
 
 
 def _get_activities(notifications_by_email):
@@ -422,29 +403,27 @@ def _get_activities(notifications_by_email):
     return activities
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestMostRecentWeeklyNotification(object):
 
     def test_earlier_that_week(self):
-        eq(most_recent_weekly_notification_datetime(
-               datetime.datetime(2020, 1, 25)),  # a saturday
-           datetime.datetime(2020, 1, 24, 9, 0))
+        assert most_recent_weekly_notification_datetime(
+               datetime.datetime(2020, 1, 25)), datetime.datetime(2020, 1, 24, 9, 0)  # a saturday
 
     def test_later_that_week(self):
-        eq(most_recent_weekly_notification_datetime(
-               datetime.datetime(2020, 1, 23)),  # a thursday
-           datetime.datetime(2020, 1, 17, 9, 0))
+        assert most_recent_weekly_notification_datetime(
+               datetime.datetime(2020, 1, 23)), datetime.datetime(2020, 1, 17, 9, 0)  # a thursday
 
     def test_same_day_of_week_earlier_in_the_day(self):
-        eq(most_recent_weekly_notification_datetime(
-               datetime.datetime(2020, 1, 24, 8, 0)),  # a friday
-           datetime.datetime(2020, 1, 17, 9, 0))
+        assert most_recent_weekly_notification_datetime(
+               datetime.datetime(2020, 1, 24, 8, 0)), datetime.datetime(2020, 1, 17, 9, 0)  # a friday
 
     def test_same_day_of_week_later_in_the_day(self):
-        eq(most_recent_weekly_notification_datetime(
-               datetime.datetime(2020, 1, 24, 10, 0)),  # a friday
-           datetime.datetime(2020, 1, 24, 9, 0))
+        assert most_recent_weekly_notification_datetime(
+               datetime.datetime(2020, 1, 24, 10, 0)), datetime.datetime(2020, 1, 24, 9, 0)  # a friday
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestSendEmails(object):
 
     def setup(self):
@@ -471,8 +450,7 @@ class TestSendEmails(object):
 
         mail_recipient.assert_called_once()
         body = mail_recipient.call_args[1]['body']
-        print(body)
-        assert_in('new dataset', body)
+        assert 'new dataset', body
 
 
 def time_since_emails_last_sent(frequency):
