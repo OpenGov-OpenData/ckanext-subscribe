@@ -1,7 +1,7 @@
 # encoding: utf-8
 
-import mock
 import datetime
+import mock
 
 from nose.tools import assert_equal, assert_in
 
@@ -63,14 +63,14 @@ class TestSignupSubmit(FunctionalTestBase):
 
     def test_get_not_post(self):
         response = self._get_test_app().get('/subscribe/signup', status=400)
-        response.mustcontain(u'No email address supplied')
+        response.mustcontain('No email address supplied')
 
     def test_object_not_specified(self):
         response = self._get_test_app().post(
             '/subscribe/signup',
             params={'email': 'bob@example.com'},  # no dataset or group
             status=302).follow()
-        response.mustcontain(u'Error subscribing: Must specify one of: '
+        response.mustcontain('Error subscribing: Must specify one of: '
                              '&#34;dataset_id&#34;')
 
     def test_dataset_missing(self):
@@ -78,14 +78,14 @@ class TestSignupSubmit(FunctionalTestBase):
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'dataset': 'unknown'},
             ).follow(status=404)
-        response.mustcontain(u'Dataset not found')
+        response.mustcontain('Dataset not found')
 
     def test_group_missing(self):
         response = self._get_test_app().post(
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'group': 'unknown'},
             ).follow(status=404)
-        response.mustcontain(u'Group not found')
+        response.mustcontain('Group not found')
 
     def test_empty_email(self):
         dataset = Dataset()
@@ -93,7 +93,7 @@ class TestSignupSubmit(FunctionalTestBase):
             '/subscribe/signup',
             params={'email': '', 'dataset': dataset['id']},
             status=400)
-        response.mustcontain(u'No email address supplied')
+        response.mustcontain('No email address supplied')
 
     def test_bad_email(self):
         dataset = Dataset()
@@ -101,7 +101,7 @@ class TestSignupSubmit(FunctionalTestBase):
             '/subscribe/signup',
             params={'email': 'invalid email', 'dataset': dataset['id']},
             status=400)
-        response.mustcontain(u'Email supplied is invalid')
+        response.mustcontain('Email supplied is invalid')
 
 
 class TestVerifySubscription(FunctionalTestBase):
@@ -221,9 +221,9 @@ class TestUpdate(FunctionalTestBase):
             '/subscribe/manage',
             params={'code': code},
             status=200)
-        form = response.forms["frequency-form"]
-        form["frequency"] = u"IMMEDIATE"
-        response = submit_and_follow(self._get_test_app(), form, {}, "save")
+        form = response.forms['frequency-form']
+        form['frequency'] = 'IMMEDIATE'
+        response = submit_and_follow(self._get_test_app(), form, {}, 'save')
 
         assert_in('<option value="IMMEDIATE" selected>',
                   response.body.decode('utf8'))
@@ -373,9 +373,7 @@ class TestUnsubscribeAll(FunctionalTestBase):
             params={'code': code},
             status=302)
 
-        assert_equal(response.location,
-                     'http://test.ckan.net/?__no_cache__=True'
-                     .format(dataset['name']))
+        assert_equal(response.location, 'http://test.ckan.net/?__no_cache__=True')  # .format(dataset['name']))
         response = response.follow()
         assert_in('You are no longer subscribed to notifications from CKAN',
                   response.body.decode('utf8'))
@@ -441,10 +439,10 @@ class TestRequestManageCode(FunctionalTestBase):
         )
 
         response = self._get_test_app().get('/subscribe/request_manage_code')
-        form = response.forms["request-manage-code-form"]
-        form["email"] = u"bob@example.com"
+        form = response.forms['request-manage-code-form']
+        form['email'] = 'bob@example.com'
 
-        response = submit_and_follow(self._get_test_app(), form, {}, "save")
+        response = submit_and_follow(self._get_test_app(), form, {}, 'save')
 
         mail_recipient.assert_called_once()
         assert_equal(response.request.path, '/')

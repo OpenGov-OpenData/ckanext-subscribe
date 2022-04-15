@@ -55,8 +55,7 @@ class _DomainObject(DomainObject):
         o = cls.filter(**kwds).first()
         if o:
             return o
-        else:
-            return default
+        return default
 
     @classmethod
     def filter(cls, **kwds):

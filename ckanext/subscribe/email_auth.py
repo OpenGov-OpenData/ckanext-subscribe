@@ -28,7 +28,7 @@ from ckan import model
 from ckanext.subscribe import mailer
 from ckanext.subscribe.model import LoginCode
 
-log = __import__('logging').getLogger(__name__)
+
 config = p.toolkit.config
 
 CODE_EXPIRY = datetime.timedelta(days=7)
@@ -246,9 +246,7 @@ def make_code():
 
 def authenticate_with_code(code):
     # check the code is valid
-    try:
-        login_code = LoginCode.validate_code(code)
-    except ValueError:
-        raise
+    login_code = LoginCode.validate_code(code)
+
     # do the login
     return login_code.email

@@ -4,7 +4,7 @@ from collections import defaultdict
 from ckan import model
 from ckan.model import Activity, Package, Group, Member
 from ckan.lib.dictization import model_dictize
-import ckan.plugins.toolkit as toolkit
+from ckan.plugins import toolkit
 from ckan.lib.email_notifications import string_to_timedelta
 
 from ckanext.subscribe import dictization
@@ -171,8 +171,7 @@ def is_it_time_to_send_weekly_notifications():
         frequency=Frequency.WEEKLY.value)
     if not emails_last_sent:
         return True
-    else:
-        return most_recent_weekly_notification_datetime() > emails_last_sent
+    return most_recent_weekly_notification_datetime() > emails_last_sent
 
 
 def is_it_time_to_send_daily_notifications():
@@ -180,8 +179,7 @@ def is_it_time_to_send_daily_notifications():
         frequency=Frequency.DAILY.value)
     if not emails_last_sent:
         return True
-    else:
-        return most_recent_daily_notification_datetime() > emails_last_sent
+    return most_recent_daily_notification_datetime() > emails_last_sent
 
 
 def most_recent_weekly_notification_datetime(now=None):
@@ -192,8 +190,7 @@ def most_recent_weekly_notification_datetime(now=None):
         minutes=get_config('daily_and_weekly_notification_time').minute - now.minute)
     if this_weeks_notification_date > now:
         return this_weeks_notification_date - datetime.timedelta(days=7)
-    else:
-        return this_weeks_notification_date
+    return this_weeks_notification_date
 
 
 def most_recent_daily_notification_datetime(now=None):
@@ -203,8 +200,7 @@ def most_recent_daily_notification_datetime(now=None):
         minutes=get_config('daily_and_weekly_notification_time').minute - now.minute)
     if todays_notification_time > now:
         return todays_notification_time - datetime.timedelta(days=1)
-    else:
-        return todays_notification_time
+    return todays_notification_time
 
 
 def get_weekly_notifications(notification_datetime=None):

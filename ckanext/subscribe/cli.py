@@ -2,7 +2,8 @@ import sys
 import datetime
 import time
 
-import ckan.lib.cli as cli
+from ckan.lib import cli
+from ckan import model
 import ckan.plugins as p
 
 
@@ -69,7 +70,6 @@ class subscribeCommand(cli.CkanCommand):
         db_setup()
 
     def _send_any_notifications(self):
-        from ckan import model
         log = __import__('logging').getLogger(__name__)
 
         while True:
@@ -84,7 +84,6 @@ class subscribeCommand(cli.CkanCommand):
             time.sleep(10)
 
     def _create_test_activity(self, object_id):
-        from ckan import model
         if p.toolkit.check_ckan_version(max_version='2.8.99'):
             model.repo.new_revision()
         obj = model.Package.get(object_id) or model.Group.get(object_id)
@@ -107,7 +106,6 @@ class subscribeCommand(cli.CkanCommand):
         model.Session.commit()
 
     def _delete_test_activity(self):
-        from ckan import model
         test_activity = model.Session.query(model.Activity) \
             .filter_by(activity_type='test activity') \
             .all()

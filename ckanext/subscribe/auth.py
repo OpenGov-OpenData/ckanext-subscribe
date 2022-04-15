@@ -20,14 +20,14 @@ def subscribe_signup(context, data_dict):
         check_access('group_show', context, {'id': group.id})
     else:
         return {'success': False,
-                'msg': _(u'No object specified')}
+                'msg': _('No object specified')}
 
     if skip_verification and \
             skip_verification not in (None, 0, False) and \
             skip_verification not in ('false', 'f', 'no', 'n', '0'):
         # sysadmins only
         return {'success': False,
-                'msg': _(u'Not authorized to skip verification')}
+                'msg': _('Not authorized to skip verification')}
 
     return {'success': True}
 

@@ -27,10 +27,10 @@ class TestSubscribeSignup(object):
         dataset = factories.Dataset()
 
         subscription = helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            dataset_id=dataset["id"],
+            dataset_id=dataset['id'],
         )
 
         send_request_email.assert_called_once()
@@ -51,10 +51,10 @@ class TestSubscribeSignup(object):
         dataset = factories.Dataset()
 
         helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            dataset_id=dataset["name"],
+            dataset_id=dataset['name'],
         )
 
         send_request_email.assert_called_once()
@@ -67,10 +67,10 @@ class TestSubscribeSignup(object):
         group = factories.Group()
 
         helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            group_id=group["id"],
+            group_id=group['id'],
         )
 
         send_request_email.assert_called_once()
@@ -83,10 +83,10 @@ class TestSubscribeSignup(object):
         group = factories.Group()
 
         helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            group_id=group["name"],
+            group_id=group['name'],
         )
 
         send_request_email.assert_called_once()
@@ -99,10 +99,10 @@ class TestSubscribeSignup(object):
         org = factories.Organization()
 
         helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            organization_id=org["id"],
+            organization_id=org['id'],
         )
 
         send_request_email.assert_called_once()
@@ -115,10 +115,10 @@ class TestSubscribeSignup(object):
         org = factories.Organization()
 
         helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            organization_id=org["name"],
+            organization_id=org['name'],
         )
 
         send_request_email.assert_called_once()
@@ -131,10 +131,10 @@ class TestSubscribeSignup(object):
         dataset = factories.Dataset()
 
         subscription = helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            dataset_id=dataset["id"],
+            dataset_id=dataset['id'],
             skip_verification=True,
         )
 
@@ -156,10 +156,10 @@ class TestSubscribeSignup(object):
         send_request_email.reset_mock()
 
         subscription = helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            dataset_id=dataset["id"],
+            dataset_id=dataset['id'],
         )
 
         send_request_email.assert_called_once()
@@ -179,28 +179,24 @@ class TestSubscribeSignup(object):
     def test_dataset_doesnt_exist(self, send_request_email):
         with assert_raises(ValidationError) as cm:
             helpers.call_action(
-                "subscribe_signup",
+                'subscribe_signup',
                 {},
                 email='bob@example.com',
                 dataset_id='doesnt-exist',
             )
-        assert_in("dataset_id': [u'Not found",
-                  str(cm.exception.error_dict))
-
+        assert "dataset_id': [u'Not found" in str(cm.exception.error_dict)
         assert not send_request_email.called
 
     @mock.patch('ckanext.subscribe.email_verification.send_request_email')
     def test_group_doesnt_exist(self, send_request_email):
         with assert_raises(ValidationError) as cm:
             helpers.call_action(
-                "subscribe_signup",
+                'subscribe_signup',
                 {},
                 email='bob@example.com',
                 group_id='doesnt-exist',
             )
-        assert_in("group_id': [u'That group name or ID does not exist",
-                  str(cm.exception.error_dict))
-
+        assert "group_id': [u'That group name or ID does not exist" in str(cm.exception.error_dict)
         assert not send_request_email.called
 
     @mock.patch('ckanext.subscribe.email_verification.send_request_email')
@@ -210,11 +206,11 @@ class TestSubscribeSignup(object):
 
         with assert_raises(ValidationError) as cm:
             helpers.call_action(
-                "subscribe_signup",
+                'subscribe_signup',
                 {},
                 email='bob@example.com',
-                dataset_id=dataset["id"],
-                group_id=group["id"],
+                dataset_id=dataset['id'],
+                group_id=group['id'],
             )
         assert_in('Must not specify more than one of: "dataset_id", "group_id"'
                   ' or "organization_id"',
@@ -241,7 +237,7 @@ class TestSubscribeVerify(object):
         )
 
         subscription = helpers.call_action(
-            "subscribe_verify",
+            'subscribe_verify',
             {},
             code='the_code',
         )
@@ -275,7 +271,7 @@ class TestSubscribeVerify(object):
 
         with assert_raises(ValidationError) as cm:
             subscription = helpers.call_action(
-                "subscribe_verify",
+                'subscribe_verify',
                 {},
                 code='wrong_code',
             )
@@ -299,7 +295,7 @@ class TestSubscribeVerify(object):
 
         with assert_raises(ValidationError) as cm:
             subscription = helpers.call_action(
-                "subscribe_verify",
+                'subscribe_verify',
                 {},
                 code='the_code',
             )
@@ -321,15 +317,15 @@ class TestSubscribeAndVerify(object):
 
         # subscribe
         subscription = helpers.call_action(
-            "subscribe_signup",
+            'subscribe_signup',
             {},
             email='bob@example.com',
-            dataset_id=dataset["id"],
+            dataset_id=dataset['id'],
         )
         code = send_request_email.call_args[0][0].verification_code
         # verify
         subscription = helpers.call_action(
-            "subscribe_verify",
+            'subscribe_verify',
             {},
             code=code,
         )
@@ -555,7 +551,7 @@ class TestUpdate(object):
         )
 
         subscription = helpers.call_action(
-            "subscribe_update",
+            'subscribe_update',
             {},
             id=subscription['id'],
             frequency='DAILY',
@@ -571,7 +567,7 @@ class TestUpdate(object):
         )
 
         subscription = helpers.call_action(
-            "subscribe_update",
+            'subscribe_update',
             {},
             id=subscription['id'],
         )

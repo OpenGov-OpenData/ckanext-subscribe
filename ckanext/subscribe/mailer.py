@@ -48,11 +48,11 @@ def _mail_recipient(recipient_name, recipient_email,
             msg.add_header(k, v)
     subject = Header(subject.encode('utf-8'), 'utf-8')
     msg['Subject'] = subject
-    msg['From'] = _("%s <%s>") % (sender_name, mail_from)
-    recipient = u"%s <%s>" % (recipient_name, recipient_email)
+    msg['From'] = _('%s <%s>') % (sender_name, mail_from)
+    recipient = '%s <%s>' % (recipient_name, recipient_email)
     msg['To'] = Header(recipient, 'utf-8')
     msg['Date'] = utils.formatdate(time())
-    msg['X-Mailer'] = "CKAN %s" % ckan.__version__
+    msg['X-Mailer'] = 'CKAN %s' % ckan.__version__
     if reply_to and reply_to != '':
         msg['Reply-to'] = reply_to
     _mail_payload(msg, mail_from, recipient_email)
@@ -93,16 +93,16 @@ def _mail_payload(msg, mail_from, recipient_email):
                 # Re-identify ourselves over TLS connection.
                 smtp_connection.ehlo()
             else:
-                raise MailerException("SMTP server does not support STARTTLS")
+                raise MailerException('SMTP server does not support STARTTLS')
 
         # If 'smtp.user' is in CKAN config, try to login to SMTP server.
         if smtp_user:
-            assert smtp_password, ("If smtp.user is configured then "
-                                   "smtp.password must be configured as well.")
+            assert smtp_password, ('If smtp.user is configured then '
+                                   'smtp.password must be configured as well.')
             smtp_connection.login(smtp_user, smtp_password)
 
         smtp_connection.sendmail(mail_from, [recipient_email], msg.as_string())
-        log.info("Sent email to {0}".format(recipient_email))
+        log.info('Sent email to {0}'.format(recipient_email))
 
     except smtplib.SMTPException as e:
         msg = '%r' % e
@@ -113,7 +113,7 @@ def _mail_payload(msg, mail_from, recipient_email):
 
 
 def mail_recipient(recipient_name, recipient_email, subject,
-                   body, body_html=None, headers={}):
+                   body, body_html=None, headers=None):
     site_title = config.get('ckan.site_title')
     site_url = config.get('ckan.site_url')
     return _mail_recipient(recipient_name, recipient_email,

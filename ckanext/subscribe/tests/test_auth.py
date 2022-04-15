@@ -2,10 +2,9 @@
 
 from nose.tools import assert_raises, assert_in
 
-import ckan.tests.helpers as helpers
-import ckan.tests.factories as factories
-import ckan.logic as logic
-from ckan import model
+from ckan.tests import helpers
+from ckan.tests import factories
+from ckan import logic, model
 
 
 class TestSubscribeSignupToDataset(object):

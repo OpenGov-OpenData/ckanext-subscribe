@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import datetime
+from pprint import pprint
 
 import mock
 from nose.tools import assert_equal, assert_in
@@ -71,7 +72,7 @@ class TestGetImmediateNotifications(object):
         eq(notifies.keys(),
            [subscription['email']])
         eq(_get_activities(notifies),
-           [(u'bob@example.com', u'new package', dataset['id'])])
+           [('bob@example.com', 'new package', dataset['id'])])
 
     def test_subscribe_to_an_org_and_its_dataset_has_activity(self):
         org = Organization()
@@ -86,7 +87,7 @@ class TestGetImmediateNotifications(object):
         eq(notifies.keys(),
            [subscription['email']])
         eq(_get_activities(notifies),
-           [(u'bob@example.com', u'new package', dataset['id'])])
+           [('bob@example.com', 'new package', dataset['id'])])
 
     def test_subscribe_to_an_group_and_its_dataset_has_activity(self):
         group = Group()
@@ -101,7 +102,7 @@ class TestGetImmediateNotifications(object):
         eq(notifies.keys(),
            [subscription['email']])
         eq(_get_activities(notifies),
-           [(u'bob@example.com', u'new package', dataset['id'])])
+           [('bob@example.com', 'new package', dataset['id'])])
 
     def test_old_activity_not_notified(self):
         dataset = factories.DatasetActivity(
@@ -137,7 +138,7 @@ class TestGetImmediateNotifications(object):
         notifies = get_immediate_notifications()
 
         eq(_get_activities(notifies), [
-            (u'bob@example.com', u'changed package', dataset['id'])
+            ('bob@example.com', 'changed package', dataset['id'])
         ])
 
     def test_lots_of_users_and_datasets(self):
@@ -158,18 +159,18 @@ class TestGetImmediateNotifications(object):
 
         eq(set(notifies.keys()),
            set(('user@a.com', 'user@b.com', 'user@b.com')))
-        from pprint import pprint
+
         pprint(_get_activities(notifies))
         eq(set(_get_activities(notifies)),
            set((
-                (u'user@a.com', u'new package', datasetx['id']),
-                (u'user@a.com', u'changed package', datasetx['id']),
-                (u'user@a.com', u'changed package', datasetx['id']),
-                (u'user@b.com', u'new package', datasetx['id']),
-                (u'user@b.com', u'changed package', datasetx['id']),
-                (u'user@b.com', u'changed package', datasetx['id']),
-                (u'user@b.com', u'new package', datasety['id']),
-                (u'user@b.com', u'changed package', datasety['id']),
+                ('user@a.com', 'new package', datasetx['id']),
+                ('user@a.com', 'changed package', datasetx['id']),
+                ('user@a.com', 'changed package', datasetx['id']),
+                ('user@b.com', 'new package', datasetx['id']),
+                ('user@b.com', 'changed package', datasetx['id']),
+                ('user@b.com', 'changed package', datasetx['id']),
+                ('user@b.com', 'new package', datasety['id']),
+                ('user@b.com', 'changed package', datasety['id']),
                )))
 
     def test_weekly_frequency_subscriptions_are_not_included(self):
@@ -181,7 +182,7 @@ class TestGetImmediateNotifications(object):
         eq(_get_activities(notifies), [])
 
 
-def _create_dataset_and_activity(activity_in_minutes_ago=[]):
+def _create_dataset_and_activity(activity_in_minutes_ago=()):
     minutes_ago = activity_in_minutes_ago.pop(0)
     dataset = factories.DatasetActivity(
         timestamp=datetime.datetime.now() -
@@ -211,9 +212,8 @@ class TestSendWeeklyNotificationsIfItsTimeTo(object):
 
         send_notification_email.assert_called_once()
         code, email, notifications = send_notification_email.call_args[0]
-        eq(type(code), type(u''))
-        eq(email, 'bob@example.com')
-        eq(len(notifications), 1)
+        assert email, 'bob@example.com'
+        assert len(notifications), 1
         eq([(a['activity_type'], a['data']['package']['id'])
             for a in notifications[0]['activities']],
            [('new package', dataset['id'])])
@@ -249,7 +249,7 @@ class TestGetWeeklyNotifications(object):
         eq(notifies.keys(),
            [subscription['email']])
         eq(_get_activities(notifies),
-           [(u'bob@example.com', u'new package', dataset['id'])])
+           [('bob@example.com', 'new package', dataset['id'])])
 
     def test_daily_frequency_subscriptions_are_not_included(self):
         dataset = factories.DatasetActivity()
@@ -366,7 +366,7 @@ class TestGetDailyNotifications(object):
         eq(notifies.keys(),
            [subscription['email']])
         eq(_get_activities(notifies),
-           [(u'bob@example.com', u'new package', dataset['id'])])
+           [('bob@example.com', 'new package', dataset['id'])])
 
     def test_weekly_frequency_subscriptions_are_not_included(self):
         dataset = factories.DatasetActivity()

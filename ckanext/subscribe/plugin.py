@@ -1,7 +1,7 @@
 # encoding: utf-8
 
-import ckan.plugins as plugins
-import ckan.plugins.toolkit as toolkit
+from ckan import plugins
+from ckan.plugins import toolkit
 
 from ckanext.subscribe import action
 from ckanext.subscribe import auth
@@ -25,26 +25,26 @@ class SubscribePlugin(plugins.SingletonPlugin):
 
     # IRoutes
 
-    def before_map(self, map):
+    def before_map(self, l_map):
         controller = 'ckanext.subscribe.controller:SubscribeController'
-        map.connect('signup', '/subscribe/signup',
-                    controller=controller, action='signup')
-        map.connect('verify', '/subscribe/verify',
-                    controller=controller, action='verify_subscription')
-        map.connect('update', '/subscribe/update',
-                    controller=controller, action='update')
-        map.connect('manage', '/subscribe/manage',
-                    controller=controller, action='manage')
-        map.connect('unsubscribe', '/subscribe/unsubscribe',
-                    controller=controller, action='unsubscribe')
-        map.connect('unsubscribe_all', '/subscribe/unsubscribe-all',
-                    controller=controller, action='unsubscribe_all')
-        map.connect('request_manage_code', '/subscribe/request_manage_code',
-                    controller=controller, action='request_manage_code')
-        return map
+        l_map.connect('signup', '/subscribe/signup',
+                      controller=controller, action='signup')
+        l_map.connect('verify', '/subscribe/verify',
+                      controller=controller, action='verify_subscription')
+        l_map.connect('update', '/subscribe/update',
+                      controller=controller, action='update')
+        l_map.connect('manage', '/subscribe/manage',
+                      controller=controller, action='manage')
+        l_map.connect('unsubscribe', '/subscribe/unsubscribe',
+                      controller=controller, action='unsubscribe')
+        l_map.connect('unsubscribe_all', '/subscribe/unsubscribe-all',
+                      controller=controller, action='unsubscribe_all')
+        l_map.connect('request_manage_code', '/subscribe/request_manage_code',
+                      controller=controller, action='request_manage_code')
+        return l_map
 
-    def after_map(self, map):
-        return map
+    def after_map(self, l_map):
+        return l_map
 
     # IActions
 
