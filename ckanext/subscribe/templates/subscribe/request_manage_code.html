@@ -2,8 +2,16 @@
 
 {% block styles %}
   {{ super() }}
-  {% resource 'subscribe/subscribe.css' %}
+  {% set type = 'asset' if ckan_29_or_higher else 'resource' %}
+  {% snippet 'snippets/subscribe_' ~ type ~ '.html', name='subscribe/subscribe.html' %}
 {% endblock styles %}
+{% set ckan_29_or_higher = h.subscribe_ckan_version(h.ckan_version()) >= h.subscribe_ckan_version('2.9') %}
+
+{% if ckan_29_or_higher %}
+    {% set request_manage_code = h.url_for('subscribe.request_manage_code') %}
+{% else %}
+    {% set request_manage_code = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='request_manage_code') %}
+{% endif %}
 
 {% block primary_content %}
 
@@ -13,7 +21,7 @@
    send you a fresh access link to the subscription management page.</p>
 
 <p>
-  <form method='post' action="{{ h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='request_manage_code') }}" id="request-manage-code-form" enctype="multipart/form-data" class="form-inline">
+  <form method='post' action="{{ request_manage_code }}" id="request-manage-code-form" enctype="multipart/form-data" class="form-inline">
     <!-- (Bootstrap 3) <div class="form-group input-group-sm"> -->
     Email: <input id="subscribe-email" type="email" name="email" class="form-control input-large" value="{{ email }}" placeholder="" />
     <!-- </div> -->

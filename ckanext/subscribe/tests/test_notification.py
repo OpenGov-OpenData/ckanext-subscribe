@@ -450,7 +450,7 @@ class TestSendEmails(object):
 
         mail_recipient.assert_called_once()
         body = mail_recipient.call_args[1]['body']
-        assert 'new dataset', body
+        assert 'new dataset' in body
 
 
 def time_since_emails_last_sent(frequency):

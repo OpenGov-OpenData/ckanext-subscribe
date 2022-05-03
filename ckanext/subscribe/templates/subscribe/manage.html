@@ -1,8 +1,24 @@
 {% extends "page.html" %}
 
+{% set ckan_29_or_higher = h.subscribe_ckan_version(h.ckan_version()) >= h.subscribe_ckan_version('2.9') %}
+
+{% if ckan_29_or_higher %}
+    {% set signup_url = h.url_for('subscribe.signup') %}
+    {% set update_url = h.url_for('subscribe.update') %}
+    {% set unsubscribe_url = h.url_for('subscribe.unsubscribe') %}
+    {% set unsubscribe_all_url = h.url_for('subscribe.unsubscribe_all') %}
+
+{% else %}
+    {% set signup_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='signup') %}
+    {% set update_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='update') %}
+    {% set unsubscribe_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='unsubscribe') %}
+    {% set unsubscribe_all_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='unsubscribe_all') %}
+{% endif %}
+
 {% block styles %}
   {{ super() }}
-  {% resource 'subscribe/subscribe.css' %}
+  {% set type = 'asset' if ckan_29_or_higher else 'resource' %}
+  {% snippet 'snippets/subscribe_' ~ type ~ '.html' %}
 {% endblock styles %}
 
 {% block primary %}
@@ -24,7 +40,7 @@
         </td>
         <td>
           {% if not subscription.verified %}
-            <form method='post' action="{{ h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='signup') }}" id="subscribe-form" enctype="multipart/form-data" class="form-inline">
+            <form method='post' action="{{ signup_url }}" id="subscribe-form" enctype="multipart/form-data" class="form-inline">
               <!-- (Bootstrap 3) <div class="form-group input-group-sm"> -->
                 <input id="subscribe-email" type="hidden" name="email" value="{{ email }}" />
                 <input id="subscribe-{{ subscription.object_type }}" type="hidden" name="{{ subscription.object_type }}" value="{{ subscription.object_name }}" />
@@ -36,7 +52,7 @@
         <td>
           {% if subscription.verified %}
             {% import 'macros/form.html' as form %}
-            <form method='post' action="{{ h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='update') }}" id="frequency-form" enctype="multipart/form-data" class="form-inline">
+            <form method='post' action="{{ update_url }}" id="frequency-form" enctype="multipart/form-data" class="form-inline">
               <input id="subscribe-code" type="hidden" name="code" value="{{ code }}" />
               <input id="subscribe-id" type="hidden" name="id" value="{{ subscription.id }}" />
               {{ form.select('frequency', label=_('Emails are sent'), options=frequency_options, selected=subscription.frequency, error=None) }}
@@ -47,7 +63,7 @@
           {% endif %}
         </td>
         <td>
-            <form method='post' action="{{ h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='unsubscribe') }}" id="unsubscribe-form" enctype="multipart/form-data" class="form-inline">
+            <form method='post' action="{{ unsubscribe_url }}" id="unsubscribe-form" enctype="multipart/form-data" class="form-inline">
               <!-- (Bootstrap 3) <div class="form-group input-group-sm"> -->
                 <input id="unsubscribe-code" type="hidden" name="code" value="{{ code }}" />
                 <input id="unsubscribe-{{ subscription.object_type }}" type="hidden" name="{{ subscription.object_type }}" value="{{ subscription.object_name }}" />
@@ -59,7 +75,7 @@
     {% endfor %}
   </table>
 
-  <form method='post' action="{{ h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='unsubscribe_all') }}" id="unsubscribe-all" enctype="multipart/form-data" class="form-inline">
+  <form method='post' action="{{ unsubscribe_all_url }}" id="unsubscribe-all" enctype="multipart/form-data" class="form-inline">
     <!-- (Bootstrap 3) <div class="form-group input-group-sm"> -->
       <input id="unsubscribe-code" type="hidden" name="code" value="{{ code }}" />
     <!-- </div> -->

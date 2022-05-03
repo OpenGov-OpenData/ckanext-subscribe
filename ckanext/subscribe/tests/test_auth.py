@@ -74,6 +74,7 @@ class TestSubscribeSignupToDataset(object):
             assert 'Not authorized to skip verification' in cm.exception.message
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestSubscribeListSubscriptions(object):
 
     def setup(self):
@@ -92,6 +93,7 @@ class TestSubscribeListSubscriptions(object):
                               email=fred['email'])
 
 
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestSubscribeUnsubscribe(object):
 
     def setup(self):

@@ -309,7 +309,7 @@ def dictize_notifications(subscription_activities):
         subscription_dict = \
             dictization.dictize_subscription(subscription, context)
         activity_dicts = model_dictize.activity_list_dictize(
-            activities, context)
+            activities, context, include_data=True)
         notifications_dictized.append(
             {
                 'subscription': subscription_dict,

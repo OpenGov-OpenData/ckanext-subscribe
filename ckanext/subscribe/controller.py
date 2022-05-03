@@ -4,48 +4,48 @@ import re
 
 import ckan.lib.helpers as h
 from ckan import model
-from ckan.common import g
+from ckan.common import g, ugettext, config
+from ckan.lib.base import abort
 from ckan.plugins.toolkit import (
     ValidationError,
     ObjectNotFound,
     get_action,
-    _,
     request,
-    BaseController,
-    abort,
     render,
     redirect_to,
-    config,
 )
 from ckan.lib.mailer import MailerException
 
 from ckanext.subscribe import email_auth
 from ckanext.subscribe import model as subscribe_model
+from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
+
 
 log = __import__('logging').getLogger(__name__)
 
 
-class SubscribeController(BaseController):
-    def signup(self):
+class SubscribeController:
+    @classmethod
+    def signup(cls):
         # validate inputs
-        email = request.POST.get('email')
-        dataset_title = request.POST.get('dataset-title')
-        group_title = request.POST.get('group-title')
+        email = cls.get_value_from_request_data('email')
+        dataset_title = cls.get_value_from_request_data('dataset-title')
+        group_title = cls.get_value_from_request_data('group-title')
         if not email:
-            abort(400, _('No email address supplied'))
+            abort(400, ugettext('No email address supplied'))
         email = email.strip()
         # pattern from https://html.spec.whatwg.org/#e-mail-state-(type=email)
         email_re = r'^[a-zA-Z0-9.!#$%&\'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?' \
                    r'(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
         if not re.match(email_re, email):
-            abort(400, _('Email supplied is invalid'))
+            abort(400, ugettext('Email supplied is invalid'))
 
         # create subscription
         data_dict = {
             'email': email,
-            'dataset_id': request.POST.get('dataset'),
-            'group_id': request.POST.get('group'),
-            'organization_id': request.POST.get('organization'),
+            'dataset_id': cls.get_value_from_request_data('dataset'),
+            'group_id': cls.get_value_from_request_data('group'),
+            'organization_id': cls.get_value_from_request_data('organization'),
         }
         context = {
             'model': model,
@@ -63,26 +63,27 @@ class SubscribeController(BaseController):
                     error_messages.extend(err.error_dict.pop(key_ignored))
             if err.error_dict:
                 error_messages.append(repr(err.error_dict))
-            h.flash_error(_('Error subscribing: {}'
-                            .format('; '.join(error_messages))))
-            return self._redirect_back_to_subscribe_page_from_request(data_dict)
+            h.flash_error(ugettext('Error subscribing: {}'
+                                   .format('; '.join(error_messages))))
+            return cls._redirect_back_to_subscribe_page_from_request(data_dict)
         except MailerException:
-            h.flash_error(_('Error sending email - please contact an '
-                            'administrator for help'))
-            return self._redirect_back_to_subscribe_page_from_request(data_dict)
+            h.flash_error(ugettext('Error sending email - please contact an '
+                                   'administrator for help'))
+            return cls._redirect_back_to_subscribe_page_from_request(data_dict)
         else:
             subscribe_title = dataset_title or group_title
             h.flash_success(
-                _('Subscription to {} was successful, please confirm '
-                  'your subscription by checking your email inbox and '
-                  'spam/trash folder'.format(subscribe_title))
+                ugettext('Subscription to {} was successful, please confirm '
+                         'your subscription by checking your email inbox and '
+                         'spam/trash folder'.format(subscribe_title))
             )
 
-            return self._redirect_back_to_subscribe_page(
+            return cls._redirect_back_to_subscribe_page(
                 subscription['object_name'], subscription['object_type'])
 
-    def verify_subscription(self):
-        data_dict = {'code': request.params.get('code')}
+    @classmethod
+    def verify_subscription(cls):
+        data_dict = {'code': request.params.get('code') or request.values.get('code')}
         context = {
             'model': model,
             'session': model.Session,
@@ -93,32 +94,31 @@ class SubscribeController(BaseController):
         try:
             subscription = get_action('subscribe_verify')(context, data_dict)
         except ValidationError as err:
-            h.flash_error(_('Error subscribing: {}'
-                            .format(err.error_dict['message'])))
+            h.flash_error(ugettext('Error subscribing: {}'
+                                   .format(err.error_dict['message'])))
             return redirect_to('home')
 
         h.flash_success(
-            _('Subscription confirmed'))
+            ugettext('Subscription confirmed'))
         code = email_auth.create_code(subscription['email'])
 
-        return redirect_to(
-            controller='ckanext.subscribe.controller:SubscribeController',
-            action='manage',
-            code=code,
-        )
+        return cls.redirect('subscribe.manage',
+                            'ckanext.subscribe.controller:SubscribeController.manage',
+                            code=code)
 
-    def manage(self):
+    @classmethod
+    def manage(cls):
         code = request.params.get('code')
         if not code:
             h.flash_error('Code not supplied')
             log.debug('No code supplied')
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
         try:
             email = email_auth.authenticate_with_code(code)
         except ValueError as exp:
             h.flash_error('Code is invalid: {}'.format(exp))
             log.debug('Code is invalid: {}'.format(exp))
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
 
         # user has done auth, but it's an email rather than a ckan user, so
         # use site_user
@@ -147,34 +147,54 @@ class SubscribeController(BaseController):
             'frequency_options': frequency_options,
         })
 
-    def update(self):
-        code = request.POST.get('code')
+    @staticmethod
+    def get_value_from_request_data(name):
+        try:
+            # Ckan < 2.9
+            return request.POST.get(name)
+        except AttributeError:
+            # Ckan >= 2.9
+            return request.values.get(name)
+
+    @staticmethod
+    def redirect(new_route, old_route, **kwargs):
+        if IS_CKAN_29_OR_HIGHER:
+            route = new_route
+        else:
+            route = old_route
+        redirect_url = h.url_for(route, **kwargs)
+        return redirect_to(redirect_url, **kwargs)
+
+    @classmethod
+    def update(cls):
+        code = cls.get_value_from_request_data('code')
+
         if not code:
             h.flash_error('Code not supplied')
             log.debug('No code supplied')
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
         try:
             email = email_auth.authenticate_with_code(code)
         except ValueError as exp:
             h.flash_error('Code is invalid: {}'.format(exp))
             log.debug('Code is invalid: {}'.format(exp))
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
 
-        subscription_id = request.POST.get('id')
+        subscription_id = cls.get_value_from_request_data('id')
         if not subscription_id:
-            abort(400, _('No id supplied'))
+            abort(400, ugettext('No id supplied'))
         subscription = model.Session.query(subscribe_model.Subscription) \
             .get(subscription_id)
         if not subscription:
-            abort(404, _('That subscription ID does not exist.'))
+            abort(404, ugettext('That subscription ID does not exist.'))
         if subscription.email != email:
             h.flash_error('Code is invalid for that subscription')
             log.debug('Code is invalid for that subscription')
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
 
-        frequency = request.POST.get('frequency')
+        frequency = cls.get_value_from_request_data('frequency')
         if not frequency:
-            abort(400, _('No frequency supplied'))
+            abort(400, ugettext('No frequency supplied'))
 
         # user has done auth, but it's an email rather than a ckan user, so
         # use site_user
@@ -195,31 +215,28 @@ class SubscribeController(BaseController):
         try:
             get_action('subscribe_update')(context, data_dict)
         except ValidationError as err:
-            h.flash_error(_('Error updating subscription: {}'
-                            .format(err.error_dict['message'])))
+            h.flash_error(ugettext('Error updating subscription: {}'
+                                   .format(err.error_dict['message'])))
         else:
-            h.flash_success(_('Subscription updated'))
+            h.flash_success(ugettext('Subscription updated'))
 
-        return redirect_to(
-            controller='ckanext.subscribe.controller:SubscribeController',
-            action='manage',
-            code=code,
-        )
+        return cls.redirect('subscribe.manage', 'ckanext.subscribe.controller:SubscribeController.manage', code=code)
 
-    def unsubscribe(self):
+    @classmethod
+    def unsubscribe(cls):
         # allow a GET or POST to do this, so that we can trigger it from a link
         # in an email or a web form
         code = request.params.get('code')
         if not code:
             h.flash_error('Code not supplied')
             log.debug('No code supplied')
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
         try:
             email = email_auth.authenticate_with_code(code)
         except ValueError as exp:
             h.flash_error('Code is invalid: {}'.format(exp))
             log.debug('Code is invalid: {}'.format(exp))
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
 
         # user has done auth, but it's an email rather than a ckan user, so
         # use site_user
@@ -249,32 +266,31 @@ class SubscribeController(BaseController):
                     error_messages.extend(err.error_dict.pop(key_ignored))
             if err.error_dict:
                 error_messages.append(repr(err.error_dict))
-            h.flash_error(_('Error unsubscribing: {}'
-                            .format('; '.join(error_messages))))
+            h.flash_error(ugettext('Error unsubscribing: {}'
+                                   .format('; '.join(error_messages))))
         except ObjectNotFound as err:
-            h.flash_error(_('Error unsubscribing: {}'.format(err)))
+            h.flash_error(ugettext('Error unsubscribing: {}'.format(err)))
         else:
             h.flash_success(
-                _('You are no longer subscribed to this {}'
-                  .format(object_type)))
-            return self._redirect_back_to_subscribe_page(object_name,
-                                                         object_type)
-        return self._redirect_back_to_subscribe_page_from_request(data_dict)
+                ugettext('You are no longer subscribed to this {}'.format(object_type)))
+            return cls._redirect_back_to_subscribe_page(object_name, object_type)
+        return cls._redirect_back_to_subscribe_page_from_request(data_dict)
 
-    def unsubscribe_all(self):
+    @classmethod
+    def unsubscribe_all(cls):
         # allow a GET or POST to do this, so that we can trigger it from a link
         # in an email or a web form
-        code = request.params.get('code')
+        code = cls.get_value_from_request_data('code')
         if not code:
             h.flash_error('Code not supplied')
             log.debug('No code supplied')
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
         try:
             email = email_auth.authenticate_with_code(code)
         except ValueError as exp:
             h.flash_error('Code is invalid: {}'.format(exp))
             log.debug('Code is invalid: {}'.format(exp))
-            return self._request_manage_code_form()
+            return cls._request_manage_code_form()
 
         # user has done auth, but it's an email rather than a ckan user, so
         # use site_user
@@ -299,38 +315,38 @@ class SubscribeController(BaseController):
                     error_messages.extend(err.error_dict.pop(key_ignored))
             if err.error_dict:
                 error_messages.append(repr(err.error_dict))
-            h.flash_error(_('Error unsubscribing: {}'
-                            .format('; '.join(error_messages))))
+            h.flash_error(ugettext('Error unsubscribing: {}'
+                                   .format('; '.join(error_messages))))
         except ObjectNotFound as err:
-            h.flash_error(_('Error unsubscribing: {}'.format(err)))
+            h.flash_error(ugettext('Error unsubscribing: {}'.format(err)))
         else:
             h.flash_success(
-                _('You are no longer subscribed to notifications from {}'
-                  .format(config.get('ckan.site_title'))))
+                ugettext('You are no longer subscribed to notifications from {}'
+                         .format(config.get('ckan.site_title'))))
             return redirect_to('home')
-        return redirect_to(
-            controller='ckanext.subscribe.controller:SubscribeController',
-            action='manage',
+        return cls.redirect(
+            'subscribe.manage',
+            'ckanext.subscribe.controller:SubscribeController.manage',
             code=code,
         )
 
-    def _redirect_back_to_subscribe_page(self, object_name, object_type):
+    @staticmethod
+    def _redirect_back_to_subscribe_page(object_name, object_type):
         if object_type == 'dataset':
-            return redirect_to(controller='package', action='read',
-                               id=object_name)
+            return redirect_to('dataset.read', id=object_name)
         if object_type == 'group':
-            return redirect_to(controller='group', action='read',
-                               id=object_name)
+            return redirect_to('group.read', id=object_name)
         if object_type == 'organization':
-            return redirect_to(controller='organization', action='read',
-                               id=object_name)
+            return redirect_to('organization.read', id=object_name)
         return redirect_to('home')
 
-    def _redirect_back_to_subscribe_page_from_request(self, data_dict):
+    @staticmethod
+    def _redirect_back_to_subscribe_page_from_request(data_dict):
         if data_dict.get('dataset_id'):
             dataset_obj = model.Package.get(data_dict['dataset_id'])
-            return redirect_to(
-                controller='package', action='read',
+            return SubscribeController.redirect(
+                'dataset.read',
+                'package.read',
                 id=dataset_obj.name if dataset_obj else data_dict['dataset_id']
             )
         if data_dict.get('group_id'):
@@ -342,14 +358,14 @@ class SubscribeController(BaseController):
                 id=group_obj.name if group_obj else data_dict['group_id'])
         return redirect_to('home')
 
-    def _request_manage_code_form(self):
-        return redirect_to(
-            controller='ckanext.subscribe.controller:SubscribeController',
-            action='request_manage_code',
-        )
+    @staticmethod
+    def _request_manage_code_form():
+        return SubscribeController.redirect('subscribe.request_manage_code',
+                                            'ckanext.subscribe.controller:SubscribeController.request_manage_code')
 
-    def request_manage_code(self):
-        email = request.POST.get('email')
+    @classmethod
+    def request_manage_code(cls):
+        email = cls.get_value_from_request_data('email')
         if not email:
             return render('subscribe/request_manage_code.html', extra_vars={})
 
@@ -366,17 +382,17 @@ class SubscribeController(BaseController):
                     error_messages.extend(err.error_dict.pop(key_ignored))
             if err.error_dict:
                 error_messages.append(repr(err.error_dict))
-            h.flash_error(_('Error requesting code: {}'
-                            .format('; '.join(error_messages))))
+            h.flash_error(ugettext('Error requesting code: {}'
+                                   .format('; '.join(error_messages))))
         except ObjectNotFound as err:
-            h.flash_error(_('Error requesting code: {}'.format(err)))
+            h.flash_error(ugettext('Error requesting code: {}'.format(err)))
         except MailerException:
-            h.flash_error(_('Error sending email - please contact an '
-                            'administrator for help'))
+            h.flash_error(ugettext('Error sending email - please contact an '
+                                   'administrator for help'))
         else:
             h.flash_success(
-                _('An access link has been emailed to: {}'
-                  .format(email)))
+                ugettext('An access link has been emailed to: {}'
+                         .format(email)))
             return redirect_to('home')
         return render('subscribe/request_manage_code.html',
                       extra_vars={'email': email})

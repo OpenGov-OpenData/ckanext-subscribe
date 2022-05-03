@@ -1,11 +1,17 @@
 # encoding: utf-8
-
+import six
 from ckan import plugins
 from ckan.plugins import toolkit
 
 from ckanext.subscribe import action
 from ckanext.subscribe import auth
 from ckanext.subscribe import model as subscribe_model
+from ckanext.subscribe.controller import SubscribeController
+
+from packaging.version import Version
+
+if six.PY3:
+    from ckan.views.resource import Blueprint
 
 
 class SubscribePlugin(plugins.SingletonPlugin):
@@ -13,9 +19,38 @@ class SubscribePlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes)
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IAuthFunctions)
+    plugins.implements(plugins.ITemplateHelpers)
+
+    if six.PY3:
+        plugins.implements(plugins.IBlueprint)
+
+        # IBlueprint
+        def get_blueprint(self):
+            subscribe = Blueprint('subscribe', 'subscribe', url_prefix='/subscribe')
+            subscribe.add_url_rule('/signup', methods=['GET', 'POST'],
+                                   view_func=SubscribeController.signup)
+            subscribe.add_url_rule('/verify', methods=['GET', 'POST'],
+                                   view_func=SubscribeController.verify_subscription)
+            subscribe.add_url_rule('/update', methods=['GET', 'POST'],
+                                   view_func=SubscribeController.update)
+            subscribe.add_url_rule('/manage', methods=['GET'],
+                                   view_func=SubscribeController.manage)
+            subscribe.add_url_rule('/unsubscribe', methods=['GET', 'POST'],
+                                   view_func=SubscribeController.unsubscribe)
+            subscribe.add_url_rule('/unsubscribe-all', methods=['GET', 'POST'],
+                                   view_func=SubscribeController.unsubscribe_all)
+            subscribe.add_url_rule('/request_manage_code', methods=['GET', 'POST'],
+                                   view_func=SubscribeController.request_manage_code)
+
+            return [subscribe]
+
+    # ITemplateHelpers
+    def get_helpers(self):
+        return {
+            'subscribe_ckan_version': version_builder,
+        }
 
     # IConfigurer
-
     def update_config(self, config_):
         toolkit.add_template_directory(config_, 'templates')
         toolkit.add_public_directory(config_, 'public')
@@ -24,7 +59,6 @@ class SubscribePlugin(plugins.SingletonPlugin):
         subscribe_model.setup()
 
     # IRoutes
-
     def before_map(self, l_map):
         controller = 'ckanext.subscribe.controller:SubscribeController'
         l_map.connect('signup', '/subscribe/signup',
@@ -43,11 +77,7 @@ class SubscribePlugin(plugins.SingletonPlugin):
                       controller=controller, action='request_manage_code')
         return l_map
 
-    def after_map(self, l_map):
-        return l_map
-
     # IActions
-
     def get_actions(self):
         return {
             'subscribe_signup': action.subscribe_signup,
@@ -64,7 +94,6 @@ class SubscribePlugin(plugins.SingletonPlugin):
         }
 
     # IAuthFunctions
-
     def get_auth_functions(self):
         return {
             'subscribe_signup': auth.subscribe_signup,
@@ -79,3 +108,7 @@ class SubscribePlugin(plugins.SingletonPlugin):
             'subscribe_send_any_notifications':
             auth.subscribe_send_any_notifications,
         }
+
+
+def version_builder(text_version):
+    return Version(text_version)

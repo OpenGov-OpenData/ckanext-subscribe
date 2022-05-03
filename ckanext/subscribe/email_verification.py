@@ -7,8 +7,9 @@ from six import text_type
 
 import ckan.plugins as p
 from ckan import model
+from ckan.lib.helpers import url_for
 from ckanext.subscribe import mailer
-
+from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 config = p.toolkit.config
 
 CODE_EXPIRY = datetime.timedelta(hours=8)
@@ -50,25 +51,37 @@ To confirm this email subscription, click this link:
 
 
 def get_verification_email_vars(subscription):
-    verification_link = p.toolkit.url_for(
-        controller='ckanext.subscribe.controller:SubscribeController',
-        action='verify_subscription',
-        code=subscription.verification_code,
-        qualified=True)
-    manage_link = p.toolkit.url_for(
-        controller='ckanext.subscribe.controller:SubscribeController',
-        action='manage',
-        qualified=True)
+    if IS_CKAN_29_OR_HIGHER:
+        verification_link = url_for('subscribe.verify_subscription', code=subscription.verification_code)
+    else:
+        verification_link = url_for(
+            controller='ckanext.subscribe.controller:SubscribeController',
+            action='verify_subscription',
+            code=subscription.verification_code,
+            qualified=True)
+    if IS_CKAN_29_OR_HIGHER:
+        manage_link = url_for('subscribe.manage')
+    else:
+        manage_link = url_for(
+            controller='ckanext.subscribe.controller:SubscribeController',
+            action='manage',
+            qualified=True)
+
     if subscription.object_type == 'dataset':
         subscription_object = model.Package.get(subscription.object_id)
     else:
         subscription_object = model.Group.get(subscription.object_id)
-    object_link = p.toolkit.url_for(
-        controller='package' if subscription.object_type == 'dataset'
-        else subscription.object_type,
-        action='read',
-        id=subscription.object_id,  # prefer id because it is invariant
-        qualified=True)
+    if IS_CKAN_29_OR_HIGHER:
+        object_link = url_for(
+            'dataset.read',
+            id=subscription.object_id)
+    else:
+        object_link = url_for(
+            controller='package' if subscription.object_type == 'dataset'
+            else subscription.object_type,
+            action='read',
+            id=subscription.object_id,  # prefer id because it is invariant
+            qualified=True)
     extra_vars = dict(
         site_title=config.get('ckan.site_title'),
         site_url=config.get('ckan.site_url'),

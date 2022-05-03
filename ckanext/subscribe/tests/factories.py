@@ -18,6 +18,8 @@ class Subscription(factory.Factory):
     action.
     '''
 
+    class Meta:
+        model = ckanext.subscribe.model.Subscription
     FACTORY_FOR = ckanext.subscribe.model.Subscription
 
     id = factory.Sequence(lambda n: 'test_sub_{n}'.format(n=n))
@@ -65,7 +67,8 @@ class Subscription(factory.Factory):
 class SubscriptionLowLevel(factory.Factory):
     '''A factory class for creating subscription object directly
     '''
-
+    class Meta:
+        model = ckanext.subscribe.model.Subscription
     FACTORY_FOR = ckanext.subscribe.model.Subscription
 
     id = factory.Sequence(lambda n: 'test_sub_{n}'.format(n=n))
@@ -106,7 +109,8 @@ class SubscriptionLowLevel(factory.Factory):
 # because the core ckan one is not fully featured
 class Activity(factory.Factory):
     """A factory class for creating CKAN activity objects."""
-
+    class Meta:
+        model = model.Activity
     FACTORY_FOR = model.Activity
 
     @classmethod
@@ -142,7 +146,8 @@ class Activity(factory.Factory):
 class DatasetActivity(factory.Factory):
     """A factory class for creating a CKAN dataset and associated activity
     object."""
-
+    class Meta:
+        model = model.Activity
     FACTORY_FOR = model.Activity
 
     @classmethod
@@ -180,7 +185,8 @@ class DatasetActivity(factory.Factory):
 class GroupActivity(factory.Factory):
     """A factory class for creating a CKAN group and associated activity
     object."""
-
+    class Meta:
+        model = model.Activity
     FACTORY_FOR = model.Activity
 
     @classmethod
@@ -218,7 +224,8 @@ class GroupActivity(factory.Factory):
 class OrganizationActivity(factory.Factory):
     """A factory class for creating a CKAN org and associated activity
     object."""
-
+    class Meta:
+        model = model.Activity
     FACTORY_FOR = model.Activity
 
     @classmethod

@@ -4,10 +4,9 @@ import datetime
 
 import pytest
 import mock
-from webhelpers.html import literal
+from lib.helpers import literal
 
 from ckan import model
-from ckan.tests import helpers
 import ckan.tests.factories as ckan_factories
 
 from ckanext.subscribe import model as subscribe_model
@@ -20,15 +19,11 @@ from ckanext.subscribe.notification_email import (
     dataset_href_from_activity,
 )
 from ckanext.subscribe.tests import factories
+from ckanext.subscribe.tests import SubscribeBase
 
 
 @pytest.mark.usefixtures('clean_db', 'with_plugins')
-class TestSendNotificationEmail(object):
-
-    def setup(self):
-        helpers.reset_db()
-        subscribe_model.setup()
-
+class TestSendNotificationEmail(SubscribeBase):
     @mock.patch('ckanext.subscribe.mailer.mail_recipient')
     def test_basic(self, mail_recipient):
         dataset, activity = factories.DatasetActivity(
@@ -61,12 +56,7 @@ class TestSendNotificationEmail(object):
 
 
 @pytest.mark.usefixtures('clean_db', 'with_plugins')
-class TestGetNotificationEmailContents(object):
-
-    def setup(self):
-        helpers.reset_db()
-        subscribe_model.setup()
-
+class TestGetNotificationEmailContents(SubscribeBase):
     def test_basic(self):
         dataset, activity = factories.DatasetActivity(
             timestamp=datetime.datetime.now() - datetime.timedelta(minutes=10),
@@ -109,13 +99,8 @@ class TestGetNotificationEmailContents(object):
         assert '<a href="http://test.ckan.net/dataset/{}">Test Dataset</a>'.format(dataset['name']) in email[2]
 
 
-@pytest.mark.usefixtures('clean_db', 'with_plugins')
-class TestGetNotificationEmailVars(object):
-
-    def setup(self):
-        helpers.reset_db()
-        subscribe_model.setup()
-
+@pytest.mark.usefixtures('reset_db', 'with_plugins')
+class TestGetNotificationEmailVars(SubscribeBase):
     def test_basic(self):
         dataset, activity = factories.DatasetActivity(
             timestamp=datetime.datetime.now() - datetime.timedelta(minutes=10),
@@ -133,7 +118,7 @@ class TestGetNotificationEmailVars(object):
             email='bob@example.com',
             notifications=notifications)
 
-        assert email_vars['notifications'], [{
+        assert email_vars['notifications'] == [{
             'activities': [{
                'activity_type': 'new dataset',
                'dataset_href': 'http://test.ckan.net/dataset/{}'
@@ -164,7 +149,7 @@ class TestGetNotificationEmailVars(object):
             email='bob@example.com',
             notifications=notifications)
 
-        assert email_vars['notifications'], [{
+        assert email_vars['notifications'] == [{
             'activities': [
                 {'activity_type': 'new group',
                  'dataset_href': '',
@@ -192,7 +177,7 @@ class TestGetNotificationEmailVars(object):
             email='bob@example.com',
             notifications=notifications)
 
-        assert email_vars['notifications'], [{
+        assert email_vars['notifications'] == [{
             'activities': [{'activity_type': 'new organization',
                             'dataset_href': '',
                             'dataset_link': '',
@@ -279,8 +264,8 @@ CUSTOM_ACTIVITY = {
 class TestDatasetLinkFromActivity(object):
 
     def test_basic(self):
-        assert dataset_link_from_activity(CHANGED_PACKAGE_ACTIVITY), \
-            literal('<a href="http://test.ckan.net/dataset/stream">Stream</a>')
+        assert dataset_link_from_activity(CHANGED_PACKAGE_ACTIVITY) == literal(
+            '<a href="http://test.ckan.net/dataset/stream">Stream</a>')
 
     def test_custom_activity(self):
         # don't want an exception
@@ -290,4 +275,4 @@ class TestDatasetLinkFromActivity(object):
 @pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestDatasetHrefFromActivity(object):
     def test_basic(self):
-        assert dataset_href_from_activity(CHANGED_PACKAGE_ACTIVITY), 'http://test.ckan.net/dataset/stream'
+        assert dataset_href_from_activity(CHANGED_PACKAGE_ACTIVITY) == 'http://test.ckan.net/dataset/stream'

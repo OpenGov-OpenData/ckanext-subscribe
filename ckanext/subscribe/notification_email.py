@@ -1,11 +1,16 @@
 from jinja2 import Template
-from webhelpers.html import HTML
 
 from ckan import plugins as p
 from ckan import model
 
 from ckanext.subscribe import mailer
 from ckanext.subscribe.email_auth import get_footer_contents
+from lxml import etree
+from lxml.html.builder import A
+
+from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
+
+from lib.helpers import literal
 
 config = p.toolkit.config
 
@@ -101,11 +106,16 @@ def get_notification_email_vars(email, notifications):
                 obj = model.Group.get(subscription['object_id'])
             object_name = obj.name
             object_title = obj.title
-        object_link = p.toolkit.url_for(
-            controller=object_type_,
-            action='read',
-            id=subscription['object_id'],  # prefer id because it is invariant
-            qualified=True)
+        if IS_CKAN_29_OR_HIGHER:
+            object_type_ = subscription['object_type'].replace('package', 'dataset')
+            object_link = p.toolkit.url_for('{}.read'.format(object_type_), id=subscription['object_id'], qualified=True)
+        else:
+            _obj_type = subscription['object_type'].replace('dataset', 'package')
+            object_link = p.toolkit.url_for(
+                controller=_obj_type,
+                action='read',
+                id=subscription['object_id'],  # prefer id because it is invariant
+                qualified=True)
         notifications_vars.append(dict(
             activities=activities_vars,
             object_type=subscription['object_type'],
@@ -129,7 +139,7 @@ def dataset_link_from_activity(activity):
         return ''
     try:
         title = activity['data']['package']['title']
-        return HTML.a(title, href=href)
+        return literal(etree.tostring(A(title, href=href)).decode())
     except KeyError:
         return ''
 

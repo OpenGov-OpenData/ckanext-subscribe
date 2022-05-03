@@ -21,11 +21,13 @@ This login is separate to CKAN's normal login, which uses a password.
 import datetime
 import random
 import string
+
 from six import text_type
 
 import ckan.plugins as p
 from ckan import model
 from ckanext.subscribe import mailer
+from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 from ckanext.subscribe.model import LoginCode
 
 
@@ -177,16 +179,22 @@ def get_email_vars(code, subscription=None, email=None):
     '''
     assert code
     assert subscription or email
-    unsubscribe_all_link = p.toolkit.url_for(
-        controller='ckanext.subscribe.controller:SubscribeController',
-        action='unsubscribe_all',
-        code=code,
-        qualified=True)
-    manage_link = p.toolkit.url_for(
-        controller='ckanext.subscribe.controller:SubscribeController',
-        action='manage',
-        code=code,
-        qualified=True)
+    if IS_CKAN_29_OR_HIGHER:
+        unsubscribe_all_link = p.toolkit.url_for('subscribe.unsubscribe_all')
+    else:
+        unsubscribe_all_link = p.toolkit.url_for(
+            controller='ckanext.subscribe.controller:SubscribeController',
+            action='unsubscribe_all',
+            code=code,
+            qualified=True)
+    if IS_CKAN_29_OR_HIGHER:
+        manage_link = p.toolkit.url_for('subscribe.manage')
+    else:
+        manage_link = p.toolkit.url_for(
+            controller='ckanext.subscribe.controller:SubscribeController',
+            action='manage',
+            code=code,
+            qualified=True)
     extra_vars = dict(
         site_title=config.get('ckan.site_title'),
         site_url=config.get('ckan.site_url'),
@@ -200,19 +208,24 @@ def get_email_vars(code, subscription=None, email=None):
             subscription_object = model.Package.get(subscription.object_id)
         else:
             subscription_object = model.Group.get(subscription.object_id)
-        object_link = p.toolkit.url_for(
-            controller='package' if subscription.object_type == 'dataset'
-            else subscription.object_type,
-            action='read',
-            id=subscription.object_id,
-            qualified=True)
-        unsubscribe_link = p.toolkit.url_for(
-            controller='ckanext.subscribe.controller:SubscribeController',
-            action='unsubscribe',
-            code=code,
-            qualified=True,
-            **{subscription.object_type: subscription.object_id}
-            )
+        if IS_CKAN_29_OR_HIGHER:
+            object_link = p.toolkit.url_for('dataset.read', id=subscription.object_id,)
+            unsubscribe_link = p.toolkit.url_for('subscribe.unsubscribe',  code=code,
+                                                 **{subscription.object_type: subscription.object_id})
+        else:
+            object_link = p.toolkit.url_for(
+                controller='package' if subscription.object_type == 'dataset'
+                else subscription.object_type,
+                action='read',
+                id=subscription.object_id,
+                qualified=True)
+            unsubscribe_link = p.toolkit.url_for(
+                controller='ckanext.subscribe.controller:SubscribeController',
+                action='unsubscribe',
+                code=code,
+                qualified=True,
+                **{subscription.object_type: subscription.object_id}
+                )
         extra_vars.update(
             object_type=subscription.object_type,
             object_title=subscription_object.title or subscription_object.name,
