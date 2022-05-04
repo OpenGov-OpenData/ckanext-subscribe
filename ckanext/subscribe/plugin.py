@@ -3,7 +3,7 @@ import six
 from ckan import plugins
 from ckan.plugins import toolkit
 
-from ckanext.subscribe import action
+from ckanext.subscribe import action, cli
 from ckanext.subscribe import auth
 from ckanext.subscribe import model as subscribe_model
 from ckanext.subscribe.controller import SubscribeController
@@ -23,6 +23,7 @@ class SubscribePlugin(plugins.SingletonPlugin):
 
     if six.PY3:
         plugins.implements(plugins.IBlueprint)
+        plugins.implements(plugins.IClick())
 
         # IBlueprint
         def get_blueprint(self):
@@ -43,6 +44,10 @@ class SubscribePlugin(plugins.SingletonPlugin):
                                    view_func=SubscribeController.request_manage_code)
 
             return [subscribe]
+
+        # IClick
+        def get_commands(self):
+            return [cli.subscribe]
 
     # ITemplateHelpers
     def get_helpers(self):

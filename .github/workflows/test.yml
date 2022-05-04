@@ -71,13 +71,13 @@ jobs:
     - name: Run tests (CKAN 2.7)
       if: ${{ matrix.ckan-version == '2.7'  }}
       run: |
-        nosetests --ckan --with-pylons=git_action_test.ini --nologcapture --with-coverage --cover-package=ckanext.subscribe
+        pytest --ckan-ini=git_action_test.ini --cov=ckanext.subscribe --cov-fail-under=${CODE_COVERAGE_THRESHOLD_REQUIRED} --disable-warnings ckanext/subscribe/tests | tee pytest-coverage.txt
 
     - name: Run tests (CKAN != 2.7)
       if: ${{ matrix.ckan-version != '2.7'  }}
       run: |
         set -o pipefail
-        pytest --ckan-ini=git_action_test.ini --cov=ckanext.subscribe --cov-fail-under=${CODE_COVERAGE_THRESHOLD_REQUIRED} --disable-warnings ckanext/datajson/tests | tee pytest-coverage.txt
+        pytest --ckan-ini=git_action_test.ini --cov=ckanext.subscribe --cov-fail-under=${CODE_COVERAGE_THRESHOLD_REQUIRED} --disable-warnings ckanext/subscribe/tests | tee pytest-coverage.txt
     - name: Report test coverage
       if: ${{ always() }}
       uses: coroo/pytest-coverage-commentator@v1.0.2

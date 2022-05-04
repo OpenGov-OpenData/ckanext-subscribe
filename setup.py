@@ -86,6 +86,9 @@ setup(
         [paste.paster_command]
         subscribe = ckanext.subscribe.cli:subscribeCommand
 
+        [ckan.click_command]
+        subscribe=ckanext.subscribe.cli:subscribe
+
     ''',
 
     # If you are changing from the default layout of your extension, you may
