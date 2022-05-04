@@ -8,6 +8,7 @@ from lib.helpers import literal
 
 from ckan import model
 import ckan.tests.factories as ckan_factories
+from ckan.lib.helpers import config
 
 from ckanext.subscribe import model as subscribe_model
 from ckanext.subscribe.notification import dictize_notifications
@@ -46,12 +47,12 @@ class TestSendNotificationEmail(SubscribeBase):
         body = mail_recipient.call_args[1]['body']
         print(body)
         assert dataset['title'] in body
-        assert'http://test.ckan.net/dataset/{}'.format(dataset['id']) in body
+        assert'{}/dataset/{}'.format(config.get('ckan.site_url'), dataset['id']) in body
         assert 'new dataset' in body
         body = mail_recipient.call_args[1]['body_html']
         print(body)
         assert dataset['title'] in body
-        assert 'http://test.ckan.net/dataset/{}'.format(dataset['id']) in body
+        assert '{}/dataset/{}'.format(config.get('ckan.site_url'), dataset['id']) in body
         assert 'new dataset' in body
 
 
@@ -95,8 +96,9 @@ class TestGetNotificationEmailContents(SubscribeBase):
             code='the-code', email='bob@example.com',
             notifications=notifications)
         # Check we link to the dataset, not just the org
-        assert 'http://test.ckan.net/dataset/{}'.format(dataset['name']) in email[1]
-        assert '<a href="http://test.ckan.net/dataset/{}">Test Dataset</a>'.format(dataset['name']) in email[2]
+        assert '{}/dataset/{}'.format(config.get('ckan.site_url'), dataset['name']) in email[1]
+        assert '<a href="{}/dataset/{}">Test Dataset</a>'.format(
+            config.get('ckan.site_url'), dataset['name']) in email[2]
 
 
 @pytest.mark.usefixtures('reset_db', 'with_plugins')
@@ -121,13 +123,13 @@ class TestGetNotificationEmailVars(SubscribeBase):
         assert email_vars['notifications'] == [{
             'activities': [{
                'activity_type': 'new dataset',
-               'dataset_href': 'http://test.ckan.net/dataset/{}'
-               .format(dataset['name']),
+               'dataset_href': '{}/dataset/{}'
+               .format(config.get('ckan.site_url'), dataset['name']),
                'dataset_link': literal(
-                   '<a href="http://test.ckan.net/dataset/{}">{}</a>'
-                   .format(dataset['name'], dataset['title'])),
+                   '<a href="{}/dataset/{}">{}</a>'
+                   .format(config.get('ckan.site_url'), dataset['name'], dataset['title'])),
                'timestamp': activity.timestamp}],
-            'object_link': 'http://test.ckan.net/dataset/{}'.format(dataset['id']),
+            'object_link': '{}/dataset/{}'.format(config.get('ckan.site_url'), dataset['id']),
             'object_name': dataset['name'],
             'object_title': dataset['title'],
             'object_type': 'dataset'}]
@@ -155,7 +157,7 @@ class TestGetNotificationEmailVars(SubscribeBase):
                  'dataset_href': '',
                  'dataset_link': '',
                  'timestamp': activity.timestamp}],
-            'object_link': 'http://test.ckan.net/group/{}'.format(group['id']),
+            'object_link': '{}/group/{}'.format(config.get('ckan.site_url'), group['id']),
             'object_name': group['name'],
             'object_title': group['title'],
             'object_type': 'group'}]
@@ -182,7 +184,7 @@ class TestGetNotificationEmailVars(SubscribeBase):
                             'dataset_href': '',
                             'dataset_link': '',
                             'timestamp': activity.timestamp}],
-            'object_link': 'http://test.ckan.net/organization/{}'.format(org['id']),
+            'object_link': '{}/organization/{}'.format(config.get('ckan.site_url'), org['id']),
             'object_name': org['name'],
             'object_title': org['title'],
             'object_type': 'organization'}]
@@ -265,7 +267,7 @@ class TestDatasetLinkFromActivity(object):
 
     def test_basic(self):
         assert dataset_link_from_activity(CHANGED_PACKAGE_ACTIVITY) == literal(
-            '<a href="http://test.ckan.net/dataset/stream">Stream</a>')
+            '<a href="{}/dataset/stream">Stream</a>'.format(config.get('ckan.site_url')))
 
     def test_custom_activity(self):
         # don't want an exception
@@ -275,4 +277,5 @@ class TestDatasetLinkFromActivity(object):
 @pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestDatasetHrefFromActivity(object):
     def test_basic(self):
-        assert dataset_href_from_activity(CHANGED_PACKAGE_ACTIVITY) == 'http://test.ckan.net/dataset/stream'
+        assert dataset_href_from_activity(CHANGED_PACKAGE_ACTIVITY) == '{}/dataset/stream'.format(
+            config.get('ckan.site_url'))

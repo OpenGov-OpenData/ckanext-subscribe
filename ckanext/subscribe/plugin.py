@@ -82,6 +82,9 @@ class SubscribePlugin(plugins.SingletonPlugin):
                       controller=controller, action='request_manage_code')
         return l_map
 
+    def after_map(self, l_map):
+        return l_map
+
     # IActions
     def get_actions(self):
         return {

@@ -3,6 +3,7 @@
 import datetime
 import mock
 import pytest
+from ckan.lib.helpers import config
 
 from ckan.tests.factories import Dataset, Group, Organization
 
@@ -28,7 +29,8 @@ class TestSignupSubmit(SubscribeBase):
             follow_redirects=False
         )
         assert mock_mailer.called
-        assert response.location == 'http://test.ckan.net/dataset/{}?__no_cache__=True'.format(dataset['name'])
+        assert response.location == '{}/dataset/{}?__no_cache__=True'.format(
+            config.get('ckan.site_url'), dataset['name'])
 
     @pytest.mark.usefixtures('clean_db', 'clean_index')
     @mock.patch('ckanext.subscribe.mailer.mail_recipient')
@@ -41,7 +43,8 @@ class TestSignupSubmit(SubscribeBase):
             follow_redirects=False
         )
         assert mock_mailer.called
-        assert response.location == 'http://test.ckan.net/group/{}?__no_cache__=True'.format(group['name'])
+        assert response.location == '{}/group/{}?__no_cache__=True'.format(
+            config.get('ckan.site_url'), group['name'])
 
     @pytest.mark.usefixtures('clean_db', 'clean_index')
     @mock.patch('ckanext.subscribe.mailer.mail_recipient')
@@ -54,7 +57,8 @@ class TestSignupSubmit(SubscribeBase):
             follow_redirects=False
         )
         assert mock_mailer.called
-        assert response.location == 'http://test.ckan.net/organization/{}?__no_cache__=True'.format(org['name'])
+        assert response.location == '{}/organization/{}?__no_cache__=True'.format(
+            config.get('ckan.site_url'), org['name'])
 
     @pytest.mark.usefixtures('clean_db', 'clean_index')
     def test_get_not_post(self):
@@ -129,7 +133,7 @@ class TestVerifySubscription(SubscribeBase):
         )
         assert mock_mailer.called
         assert response.location.startswith(
-            'http://test.ckan.net/subscribe/manage?code=')
+            '{}/subscribe/manage?code='.format(config.get('ckan.site_url')))
 
     def test_wrong_code(self):
         response = self.app.post(
@@ -138,7 +142,7 @@ class TestVerifySubscription(SubscribeBase):
             status=302,
             follow_redirects=False
         )
-        assert response.location == 'http://test.ckan.net/?__no_cache__=True'
+        assert response.location == '{}/?__no_cache__=True'.format(config.get('ckan.site_url'))
 
 
 @pytest.mark.usefixtures('clean_db', 'clean_index', 'with_plugins')
@@ -168,7 +172,7 @@ class TestManage(SubscribeBase):
         )
 
         assert response.location.startswith(
-           'http://test.ckan.net/subscribe/request_manage_code')
+           '{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
 
     def test_bad_code(self):
         response = self.app.get(
@@ -179,7 +183,7 @@ class TestManage(SubscribeBase):
         )
 
         assert response.location.startswith(
-           'http://test.ckan.net/subscribe/request_manage_code')
+           '{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
 
 
 @pytest.mark.ckan_config('ckan.plugins', 'subscribe')
@@ -199,10 +203,6 @@ class TestUpdate(SubscribeBase):
                     'frequency': 'daily'},
             status=200
         )
-
-        # assert response.location.startswith(
-        #     'http://test.ckan.net/subscribe/manage?code=')
-        # response = response.follow()
         assert '<option value="DAILY" selected>' in response.body
 
     def test_form_submit(self):
@@ -243,7 +243,8 @@ class TestUpdate(SubscribeBase):
             status=302,
             follow_redirects=False
         )
-        assert response.location.startswith('http://test.ckan.net/subscribe/request_manage_code')
+        assert response.location.startswith('{}/subscribe/request_manage_code'.format(
+            config.get('ckan.site_url')))
 
 
 @pytest.mark.usefixtures('with_plugins', 'with_request_context')
@@ -264,7 +265,8 @@ class TestUnsubscribe(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location == 'http://test.ckan.net/dataset/{}?__no_cache__=True'.format(dataset['name'])
+        assert response.location == '{}/dataset/{}?__no_cache__=True'.format(
+            config.get('ckan.site_url'), dataset['name'])
 
     def test_group(self):
         group = Group()
@@ -282,7 +284,8 @@ class TestUnsubscribe(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location == 'http://test.ckan.net/group/{}?__no_cache__=True'.format(group['name'])
+        assert response.location == '{}/group/{}?__no_cache__=True'.format(
+            config.get('ckan.site_url'), group['name'])
 
     def test_org(self):
         org = Organization()
@@ -300,7 +303,8 @@ class TestUnsubscribe(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location == 'http://test.ckan.net/organization/{}?__no_cache__=True'.format(org['name'])
+        assert response.location == '{}/organization/{}?__no_cache__=True'.format(
+            config.get('ckan.site_url'), org['name'])
 
     def test_no_code(self):
         dataset = Dataset()
@@ -311,7 +315,7 @@ class TestUnsubscribe(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location.startswith('http://test.ckan.net/subscribe/request_manage_code')
+        assert response.location.startswith('{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
 
     def test_bad_code(self):
         dataset = Dataset()
@@ -322,7 +326,7 @@ class TestUnsubscribe(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location.startswith('http://test.ckan.net/subscribe/request_manage_code')
+        assert response.location.startswith('{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
 
     def test_no_subscription(self):
         dataset = Dataset()
@@ -333,9 +337,6 @@ class TestUnsubscribe(SubscribeBase):
             params={'code': code, 'dataset': dataset['id']},
             status=200)
 
-        # assert response.location.startswith(
-        #    'http://test.ckan.net/dataset/{}'.format(dataset['name']))
-        # response = response.follow()
         assert 'Error unsubscribing: That user is not subscribed to that object' in response.body
 
     def test_no_object(self):
@@ -347,7 +348,7 @@ class TestUnsubscribe(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location == 'http://test.ckan.net/?__no_cache__=True'
+        assert response.location == '{}/?__no_cache__=True'.format(config.get('ckan.site_url'))
 
 
 @pytest.mark.usefixtures('with_plugins')
@@ -367,8 +368,6 @@ class TestUnsubscribeAll(SubscribeBase):
             status=200,
         )
 
-        # assert response.location, 'http://test.ckan.net/?__no_cache__=True'  # .format(dataset['name']))
-        # response = response.follow()
         assert 'You are no longer subscribed to notifications from CKAN' in response.body
 
     def test_no_code(self):
@@ -379,7 +378,7 @@ class TestUnsubscribeAll(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location.startswith('http://test.ckan.net/subscribe/request_manage_code')
+        assert response.location.startswith('{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
 
     def test_bad_code(self):
         response = self.app.get(
@@ -389,7 +388,7 @@ class TestUnsubscribeAll(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location.startswith('http://test.ckan.net/subscribe/request_manage_code')
+        assert response.location.startswith('{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
 
     def test_no_subscription(self):
         Dataset()
@@ -401,9 +400,6 @@ class TestUnsubscribeAll(SubscribeBase):
             status=200
         )
 
-        # assert response.location.startswith(
-        #    'http://test.ckan.net/')
-        # response = response.follow()
         assert 'Error unsubscribing: That user has no subscriptions' in response.body
 
     def test_no_object(self):
@@ -415,7 +411,7 @@ class TestUnsubscribeAll(SubscribeBase):
             follow_redirects=False
         )
 
-        assert response.location == 'http://test.ckan.net/?__no_cache__=True'
+        assert response.location == '{}/?__no_cache__=True'.format(config.get('ckan.site_url'))
 
 
 @pytest.mark.usefixtures('with_plugins')

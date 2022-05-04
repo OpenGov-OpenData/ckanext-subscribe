@@ -1,10 +1,11 @@
 # encoding: utf-8
 
 import re
+import six
 
 import ckan.lib.helpers as h
 from ckan import model
-from ckan.common import g, ugettext, config
+from ckan.common import g, config
 from ckan.lib.base import abort
 from ckan.plugins.toolkit import (
     ValidationError,
@@ -19,6 +20,11 @@ from ckan.lib.mailer import MailerException
 from ckanext.subscribe import email_auth
 from ckanext.subscribe import model as subscribe_model
 from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
+
+if six.PY2:
+    from ckan.common import _ as ugettext
+else:
+    from ckan.common import ugettext
 
 
 log = __import__('logging').getLogger(__name__)
