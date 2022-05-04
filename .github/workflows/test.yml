@@ -24,10 +24,9 @@ jobs:
         run: bandit -s B101,B610 -r ./ -f screen
 
   test:
-#    needs: lint
     strategy:
       matrix:
-        ckan-version: [2.9, 2.7]
+        ckan-version: [2.9, 2.8, 2.7]
       fail-fast: false
 
     name: CKAN ${{ matrix.ckan-version }}
@@ -62,22 +61,17 @@ jobs:
       run: |
         ckan -c git_action_test.ini db init
         ckan -c git_action_test.ini subscribe initdb
+
     - name: Setup extension (CKAN 2.7)
       if: ${{ matrix.ckan-version == '2.7'  }}
       run: |
         paster --plugin=ckan db init -c git_action_test.ini
         paster --plugin=ckanext-subscribe subscribe initdb -c git_action_test.ini
 
-    - name: Run tests (CKAN 2.7)
-      if: ${{ matrix.ckan-version == '2.7'  }}
+    - name: Run tests
       run: |
         pytest --ckan-ini=git_action_test.ini --cov=ckanext.subscribe --cov-fail-under=${CODE_COVERAGE_THRESHOLD_REQUIRED} --disable-warnings ckanext/subscribe/tests | tee pytest-coverage.txt
 
-    - name: Run tests (CKAN != 2.7)
-      if: ${{ matrix.ckan-version != '2.7'  }}
-      run: |
-        set -o pipefail
-        pytest --ckan-ini=git_action_test.ini --cov=ckanext.subscribe --cov-fail-under=${CODE_COVERAGE_THRESHOLD_REQUIRED} --disable-warnings ckanext/subscribe/tests | tee pytest-coverage.txt
     - name: Report test coverage
       if: ${{ always() }}
       uses: coroo/pytest-coverage-commentator@v1.0.2
