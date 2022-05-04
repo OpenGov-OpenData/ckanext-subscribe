@@ -58,7 +58,6 @@ setup(
 
     install_requires=[
         'enum34',
-        'defusedxml',
     ],
 
     # If there are data files included in your packages that need to be

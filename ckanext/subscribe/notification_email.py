@@ -5,9 +5,6 @@ from ckan import model
 
 from ckanext.subscribe import mailer
 from ckanext.subscribe.email_auth import get_footer_contents
-from defusedxml import etree
-from defusedxml.html.builder import A
-
 from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 
 from lib.helpers import literal
@@ -139,7 +136,7 @@ def dataset_link_from_activity(activity):
         return ''
     try:
         title = activity['data']['package']['title']
-        return literal(etree.tostring(A(title, href=href)).decode())
+        return literal('<a href="{}">{}</a>'.format(href, title))
     except KeyError:
         return ''
 
