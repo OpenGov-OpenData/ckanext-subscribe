@@ -5,8 +5,8 @@ from ckan import model
 
 from ckanext.subscribe import mailer
 from ckanext.subscribe.email_auth import get_footer_contents
-from lxml import etree
-from lxml.html.builder import A
+from defusedxml import etree
+from defusedxml.html.builder import A
 
 from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 
