@@ -180,7 +180,7 @@ def get_email_vars(code, subscription=None, email=None):
     assert code
     assert subscription or email
     if IS_CKAN_29_OR_HIGHER:
-        unsubscribe_all_link = p.toolkit.url_for('subscribe.unsubscribe_all')
+        unsubscribe_all_link = p.toolkit.url_for('subscribe.unsubscribe_all', code=code, qualified=True)
     else:
         unsubscribe_all_link = p.toolkit.url_for(
             controller='ckanext.subscribe.controller:SubscribeController',
@@ -188,7 +188,7 @@ def get_email_vars(code, subscription=None, email=None):
             code=code,
             qualified=True)
     if IS_CKAN_29_OR_HIGHER:
-        manage_link = p.toolkit.url_for('subscribe.manage')
+        manage_link = p.toolkit.url_for('subscribe.manage', code=code, qualified=True)
     else:
         manage_link = p.toolkit.url_for(
             controller='ckanext.subscribe.controller:SubscribeController',
@@ -209,8 +209,8 @@ def get_email_vars(code, subscription=None, email=None):
         else:
             subscription_object = model.Group.get(subscription.object_id)
         if IS_CKAN_29_OR_HIGHER:
-            object_link = p.toolkit.url_for('dataset.read', id=subscription.object_id,)
-            unsubscribe_link = p.toolkit.url_for('subscribe.unsubscribe',  code=code,
+            object_link = p.toolkit.url_for('dataset.read', id=subscription.object_id, qualified=True)
+            unsubscribe_link = p.toolkit.url_for('subscribe.unsubscribe', code=code, qualified=True,
                                                  **{subscription.object_type: subscription.object_id})
         else:
             object_link = p.toolkit.url_for(

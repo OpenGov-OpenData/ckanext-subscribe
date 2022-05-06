@@ -52,7 +52,10 @@ To confirm this email subscription, click this link:
 
 def get_verification_email_vars(subscription):
     if IS_CKAN_29_OR_HIGHER:
-        verification_link = url_for('subscribe.verify_subscription', code=subscription.verification_code)
+        verification_link = url_for(
+            'subscribe.verify_subscription',
+            code=subscription.verification_code,
+            qualified=True)
     else:
         verification_link = url_for(
             controller='ckanext.subscribe.controller:SubscribeController',
@@ -60,7 +63,7 @@ def get_verification_email_vars(subscription):
             code=subscription.verification_code,
             qualified=True)
     if IS_CKAN_29_OR_HIGHER:
-        manage_link = url_for('subscribe.manage')
+        manage_link = url_for('subscribe.manage', qualified=True)
     else:
         manage_link = url_for(
             controller='ckanext.subscribe.controller:SubscribeController',
@@ -74,7 +77,8 @@ def get_verification_email_vars(subscription):
     if IS_CKAN_29_OR_HIGHER:
         object_link = url_for(
             'dataset.read',
-            id=subscription.object_id)
+            id=subscription.object_id,
+            qualified=True)
     else:
         object_link = url_for(
             controller='package' if subscription.object_type == 'dataset'

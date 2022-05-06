@@ -23,6 +23,7 @@ from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 
 if six.PY2:
     from ckan.common import _ as ugettext
+    from ckan.lib.base import BaseController
 else:
     from ckan.common import ugettext
 
@@ -30,7 +31,7 @@ else:
 log = __import__('logging').getLogger(__name__)
 
 
-class SubscribeController:
+class _SubscribeController:
     @classmethod
     def signup(cls):
         # validate inputs
@@ -232,7 +233,7 @@ class SubscribeController:
     def unsubscribe(cls):
         # allow a GET or POST to do this, so that we can trigger it from a link
         # in an email or a web form
-        code = request.params.get('code')
+        code = request.params.get('code') or cls.get_value_from_request_data('code')
         if not code:
             h.flash_error('Code not supplied')
             log.debug('No code supplied')
@@ -257,9 +258,9 @@ class SubscribeController:
         }
         data_dict = {
             'email': email,
-            'dataset_id': request.params.get('dataset'),
-            'group_id': request.params.get('group'),
-            'organization_id': request.params.get('organization'),
+            'dataset_id': request.params.get('dataset') or cls.get_value_from_request_data('dataset'),
+            'group_id': request.params.get('group') or cls.get_value_from_request_data('group'),
+            'organization_id': request.params.get('organization') or cls.get_value_from_request_data('organization'),
         }
         try:
             object_name, object_type = \
@@ -402,3 +403,11 @@ class SubscribeController:
             return redirect_to('home')
         return render('subscribe/request_manage_code.html',
                       extra_vars={'email': email})
+
+
+if six.PY2:
+    class SubscribeController(BaseController, _SubscribeController):
+        pass
+else:
+    class SubscribeController(_SubscribeController):
+        pass

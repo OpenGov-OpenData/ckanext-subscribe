@@ -105,7 +105,10 @@ def get_notification_email_vars(email, notifications):
             object_title = obj.title
         if IS_CKAN_29_OR_HIGHER:
             object_type_ = subscription['object_type'].replace('package', 'dataset')
-            object_link = p.toolkit.url_for('{}.read'.format(object_type_), id=subscription['object_id'], qualified=True)
+            object_link = p.toolkit.url_for(
+                '{}.read'.format(object_type_),
+                id=subscription['object_id'],
+                qualified=True)
         else:
             _obj_type = subscription['object_type'].replace('dataset', 'package')
             object_link = p.toolkit.url_for(
