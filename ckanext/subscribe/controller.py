@@ -154,24 +154,6 @@ class _SubscribeController:
             'frequency_options': frequency_options,
         })
 
-    @staticmethod
-    def get_value_from_request_data(name):
-        try:
-            # Ckan < 2.9
-            return request.POST.get(name)
-        except AttributeError:
-            # Ckan >= 2.9
-            return request.values.get(name)
-
-    @staticmethod
-    def redirect(new_route, old_route, **kwargs):
-        if IS_CKAN_29_OR_HIGHER:
-            route = new_route
-        else:
-            route = old_route
-        redirect_url = h.url_for(route, **kwargs)
-        return redirect_to(redirect_url, **kwargs)
-
     @classmethod
     def update(cls):
         code = cls.get_value_from_request_data('code')
@@ -339,12 +321,11 @@ class _SubscribeController:
 
     @staticmethod
     def _redirect_back_to_subscribe_page(object_name, object_type):
-        if object_type == 'dataset':
-            return redirect_to('dataset.read', id=object_name)
-        if object_type == 'group':
-            return redirect_to('group.read', id=object_name)
-        if object_type == 'organization':
-            return redirect_to('organization.read', id=object_name)
+        if object_type in ('dataset', 'group', 'organization'):
+            return SubscribeController.redirect(
+                '{}.read'.format(object_type),
+                '{}.read'.format(object_type),
+                id=object_name)
         return redirect_to('home')
 
     @staticmethod
@@ -360,10 +341,9 @@ class _SubscribeController:
             group_obj = model.Group.get(data_dict['group_id'])
             controller = 'organization' \
                 if group_obj and group_obj.is_organization else 'group'
-            return redirect_to(
-                controller=controller, action='read',
-                id=group_obj.name if group_obj else data_dict['group_id'])
-        return redirect_to('home')
+            return SubscribeController.redirect(controller + '.read', controller + '.read',
+                                                id=group_obj.name if group_obj else data_dict['group_id'])
+        return SubscribeController.redirect('home', 'home')
 
     @staticmethod
     def _request_manage_code_form():
@@ -403,6 +383,29 @@ class _SubscribeController:
             return redirect_to('home')
         return render('subscribe/request_manage_code.html',
                       extra_vars={'email': email})
+
+    @staticmethod
+    def get_value_from_request_data(name):
+        try:
+            # Ckan < 2.9
+            return request.POST.get(name)
+        except AttributeError:
+            # Ckan >= 2.9
+            return request.values.get(name)
+
+    @staticmethod
+    def redirect(new_route, old_route, **kwargs):
+        if IS_CKAN_29_OR_HIGHER:
+            redirect_url = h.url_for(new_route, **kwargs)
+            return redirect_to(redirect_url, **kwargs)
+        else:
+            parsed_route = old_route.split('.')
+            action = parsed_route[-1]
+            controller = old_route.replace('.' + action, '')
+            if controller == 'dataset':
+                controller = 'package'
+            redirect_url = h.url_for(controller=controller, action=action, qualified=True, **kwargs)
+            return redirect_to(redirect_url)
 
 
 if six.PY2:
