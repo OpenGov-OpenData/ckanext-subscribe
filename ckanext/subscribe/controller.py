@@ -312,11 +312,12 @@ class _SubscribeController:
             h.flash_success(
                 ugettext('You are no longer subscribed to notifications from {}'
                          .format(config.get('ckan.site_title'))))
-            return redirect_to('home')
+            return redirect_to('home', __no_cache__=True)
         return cls.redirect(
             'subscribe.manage',
             'ckanext.subscribe.controller:SubscribeController.manage',
             code=code,
+            __no_cache__=True
         )
 
     @staticmethod
@@ -325,8 +326,10 @@ class _SubscribeController:
             return SubscribeController.redirect(
                 '{}.read'.format(object_type),
                 '{}.read'.format(object_type),
-                id=object_name)
-        return redirect_to('home')
+                id=object_name,
+                __no_cache__=True
+            )
+        return redirect_to('home', __no_cache__=True)
 
     @staticmethod
     def _redirect_back_to_subscribe_page_from_request(data_dict):
@@ -335,7 +338,8 @@ class _SubscribeController:
             return SubscribeController.redirect(
                 'dataset.read',
                 'package.read',
-                id=dataset_obj.name if dataset_obj else data_dict['dataset_id']
+                id=dataset_obj.name if dataset_obj else data_dict['dataset_id'],
+                __no_cache__=True
             )
         if data_dict.get('group_id'):
             group_obj = model.Group.get(data_dict['group_id'])
@@ -343,12 +347,14 @@ class _SubscribeController:
                 if group_obj and group_obj.is_organization else 'group'
             return SubscribeController.redirect(controller + '.read', controller + '.read',
                                                 id=group_obj.name if group_obj else data_dict['group_id'])
-        return SubscribeController.redirect('home', 'home')
+        return SubscribeController.redirect('home', 'home', __no_cache__=True)
 
     @staticmethod
     def _request_manage_code_form():
         return SubscribeController.redirect('subscribe.request_manage_code',
-                                            'ckanext.subscribe.controller:SubscribeController.request_manage_code')
+                                            'ckanext.subscribe.controller:SubscribeController.request_manage_code',
+                                            __no_cache__=True
+                                            )
 
     @classmethod
     def request_manage_code(cls):
@@ -405,7 +411,7 @@ class _SubscribeController:
             if controller == 'dataset':
                 controller = 'package'
             redirect_url = h.url_for(controller=controller, action=action, qualified=True, **kwargs)
-            return redirect_to(redirect_url)
+            return redirect_to(redirect_url, **kwargs)
 
 
 if six.PY2:
