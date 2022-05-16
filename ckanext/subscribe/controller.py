@@ -103,7 +103,7 @@ class _SubscribeController:
         except ValidationError as err:
             h.flash_error(ugettext('Error subscribing: {}'
                                    .format(err.error_dict['message'])))
-            return redirect_to('home')
+            return cls.redirect('home.index', 'home.index', __no_cache__=True)
 
         h.flash_success(
             ugettext('Subscription confirmed'))
@@ -312,7 +312,7 @@ class _SubscribeController:
             h.flash_success(
                 ugettext('You are no longer subscribed to notifications from {}'
                          .format(config.get('ckan.site_title'))))
-            return redirect_to('home', __no_cache__=True)
+            return cls.redirect('home', 'home.index', __no_cache__=True)
         return cls.redirect(
             'subscribe.manage',
             'ckanext.subscribe.controller:SubscribeController.manage',
@@ -329,7 +329,7 @@ class _SubscribeController:
                 id=object_name,
                 __no_cache__=True
             )
-        return redirect_to('home', __no_cache__=True)
+        return SubscribeController.redirect('home.index', 'home.index', __no_cache__=True)
 
     @staticmethod
     def _redirect_back_to_subscribe_page_from_request(data_dict):
@@ -347,7 +347,7 @@ class _SubscribeController:
                 if group_obj and group_obj.is_organization else 'group'
             return SubscribeController.redirect(controller + '.read', controller + '.read',
                                                 id=group_obj.name if group_obj else data_dict['group_id'])
-        return SubscribeController.redirect('home', 'home', __no_cache__=True)
+        return SubscribeController.redirect('home.index', 'home.index', __no_cache__=True)
 
     @staticmethod
     def _request_manage_code_form():
@@ -386,7 +386,7 @@ class _SubscribeController:
             h.flash_success(
                 ugettext('An access link has been emailed to: {}'
                          .format(email)))
-            return redirect_to('home')
+            return cls.redirect('home.index', 'home.index')
         return render('subscribe/request_manage_code.html',
                       extra_vars={'email': email})
 
@@ -394,7 +394,10 @@ class _SubscribeController:
     def get_value_from_request_data(name):
         try:
             # Ckan < 2.9
-            return request.POST.get(name)
+            if request.method == 'GET':
+                return request.params.get(name)
+            else:
+                return request.POST.get(name)
         except AttributeError:
             # Ckan >= 2.9
             return request.values.get(name)

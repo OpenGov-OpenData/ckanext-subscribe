@@ -4,6 +4,7 @@ import logging
 import datetime
 
 import ckan.plugins as p
+import six
 from ckan.lib.helpers import url_for
 from ckan.logic import validate  # put in toolkit?
 from ckan.lib.mailer import MailerException
@@ -199,15 +200,24 @@ def subscribe_list_subscriptions(context, data_dict):
         if package:
             subscription['object_name'] = package.name
             subscription['object_title'] = package.title
-            subscription['object_link'] = url_for('dataset.read', id=package.name)
+            if six.PY3:
+                subscription['object_link'] = url_for('dataset.read', id=package.name)
+            else:
+                subscription['object_link'] = url_for(controller='package', action='read', id=package.name)
         elif group and not group.is_organization:
             subscription['object_name'] = group.name
             subscription['object_title'] = group.title
-            subscription['object_link'] = url_for('group.read', id=group.name)
+            if six.PY3:
+                subscription['object_link'] = url_for('group.read', id=group.name)
+            else:
+                subscription['object_link'] = url_for(controller='group', action='read', id=group.name)
         elif group and group.is_organization:
             subscription['object_name'] = group.name
             subscription['object_title'] = group.title
-            subscription['object_link'] = url_for('organization.read', id=group.name)
+            if six.PY3:
+                subscription['object_link'] = url_for('organization.read', id=group.name)
+            else:
+                subscription['object_link'] = url_for(controller='organization', action='read', id=group.name)
         subscriptions.append(subscription)
     return subscriptions
 

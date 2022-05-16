@@ -3,6 +3,7 @@
 import datetime
 import mock
 import pytest
+import six
 from ckan.lib.helpers import config
 
 from ckan.tests.factories import Dataset, Group, Organization
@@ -26,7 +27,7 @@ class TestSignupSubmit(SubscribeBase):
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'dataset': dataset['id']},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
         assert mock_mailer.called
         assert response.location == '{}/dataset/{}?__no_cache__=True'.format(
@@ -40,7 +41,7 @@ class TestSignupSubmit(SubscribeBase):
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'group': group['id']},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
         assert mock_mailer.called
         assert response.location == '{}/group/{}?__no_cache__=True'.format(
@@ -54,7 +55,7 @@ class TestSignupSubmit(SubscribeBase):
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'group': org['id']},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
         assert mock_mailer.called
         assert response.location == '{}/organization/{}?__no_cache__=True'.format(
@@ -69,8 +70,12 @@ class TestSignupSubmit(SubscribeBase):
     def test_object_not_specified(self):
         response = self.app.post(
             '/subscribe/signup',
-            params={'email': 'bob@example.com'},  # no dataset or group
-            status=200)
+            params={'email': 'bob@example.com'})  # no dataset or group
+        if six.PY2:
+            response = response.follow()
+            assert response.status_int == 200
+        else:
+            assert response.status_code == 200
         assert 'Error subscribing: Must specify one of: &#34;dataset_id&#34;' in response.body
 
     @pytest.mark.usefixtures('clean_db', 'clean_index')
@@ -78,8 +83,11 @@ class TestSignupSubmit(SubscribeBase):
         response = self.app.post(
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'dataset': 'unknown'},
-            status=404
         )
+        if six.PY2:
+            response = response.follow(status=404)
+        else:
+            assert response.status_code == 404
         assert 'Dataset not found' in response.body
 
     @pytest.mark.usefixtures('clean_db', 'clean_index')
@@ -87,8 +95,11 @@ class TestSignupSubmit(SubscribeBase):
         response = self.app.post(
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'group': 'unknown'},
-            status=404
         )
+        if six.PY2:
+            response = response.follow(status=404)
+        else:
+            assert response.status_code == 404
         assert 'Group not found' in response.body
 
     @pytest.mark.usefixtures('clean_db', 'clean_index')
@@ -129,7 +140,7 @@ class TestVerifySubscription(SubscribeBase):
             '/subscribe/verify',
             params={'code': 'verify_code'},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
         assert mock_mailer.called
         assert response.location.startswith(
@@ -140,7 +151,7 @@ class TestVerifySubscription(SubscribeBase):
             '/subscribe/verify',
             params={'code': 'unknown_code'},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
         assert response.location == '{}/?__no_cache__=True'.format(config.get('ckan.site_url'))
 
@@ -161,14 +172,14 @@ class TestManage(SubscribeBase):
             params={'code': code},
             status=200)
 
-        assert dataset['title'] in response.body
+        assert six.ensure_str(dataset['title']) in six.ensure_str(response.body)
 
     def test_no_code(self):
         response = self.app.get(
             '/subscribe/manage',
             params={'code': ''},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location.startswith(
@@ -179,7 +190,7 @@ class TestManage(SubscribeBase):
             '/subscribe/manage',
             params={'code': 'bad-code'},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location.startswith(
@@ -201,8 +212,11 @@ class TestUpdate(SubscribeBase):
             '/subscribe/update',
             params={'code': code, 'id': subscription['id'],
                     'frequency': 'daily'},
-            status=200
         )
+        if six.PY2:
+            response = response.follow(status=200)
+        else:
+            assert response.status_code == 200
         assert '<option value="DAILY" selected>' in response.body
 
     def test_form_submit(self):
@@ -215,17 +229,23 @@ class TestUpdate(SubscribeBase):
 
         response = self.app.get(
             '/subscribe/manage',
-            params={'code': code},
-            status=200)
-        assert subscription['email'] in response.body
+            params={'code': code})
+        if six.PY2:
+            assert response.status_int == 200
+        else:
+            assert response.status_code == 200
+        assert six.ensure_str(subscription['email']) in six.ensure_str(response.body)
         form = {
             'frequency': 'IMMEDIATE',
             'code': code,
             'id': subscription['id'],
-
         }
-        post_response = self.app.post('/subscribe/update', data=form, status=200)
-
+        post_response = self.app.post('/subscribe/update', params=form)
+        if six.PY2:
+            post_response = post_response.follow()
+            assert post_response.status_int == 200
+        else:
+            assert post_response.status_code == 200
         assert '<option value="IMMEDIATE" selected>' in post_response.body
 
     def test_another_code(self):
@@ -241,7 +261,7 @@ class TestUpdate(SubscribeBase):
             params={'code': code, 'id': subscription['id'],
                     'frequency': 'daily'},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
         assert response.location.startswith('{}/subscribe/request_manage_code'.format(
             config.get('ckan.site_url')))
@@ -262,7 +282,7 @@ class TestUnsubscribe(SubscribeBase):
             '/subscribe/unsubscribe',
             params={'code': code, 'dataset': dataset['id']},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location == '{}/dataset/{}?__no_cache__=True'.format(
@@ -281,7 +301,7 @@ class TestUnsubscribe(SubscribeBase):
             '/subscribe/unsubscribe',
             params={'code': code, 'group': group['id']},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location == '{}/group/{}?__no_cache__=True'.format(
@@ -300,7 +320,7 @@ class TestUnsubscribe(SubscribeBase):
             '/subscribe/unsubscribe',
             params={'code': code, 'organization': org['id']},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location == '{}/organization/{}?__no_cache__=True'.format(
@@ -312,7 +332,7 @@ class TestUnsubscribe(SubscribeBase):
             '/subscribe/unsubscribe',
             params={'code': '', 'dataset': dataset['id']},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location.startswith('{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
@@ -323,7 +343,7 @@ class TestUnsubscribe(SubscribeBase):
             '/subscribe/unsubscribe',
             params={'code': 'bad-code', 'dataset': dataset['id']},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location.startswith('{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
@@ -334,8 +354,11 @@ class TestUnsubscribe(SubscribeBase):
 
         response = self.app.get(
             '/subscribe/unsubscribe',
-            params={'code': code, 'dataset': dataset['id']},
-            status=200)
+            params={'code': code, 'dataset': dataset['id']})
+        if six.PY2:
+            response = response.follow(status=200)
+        else:
+            assert response.status_code == 200
 
         assert 'Error unsubscribing: That user is not subscribed to that object' in response.body
 
@@ -345,13 +368,13 @@ class TestUnsubscribe(SubscribeBase):
             '/subscribe/unsubscribe',
             params={'code': code, 'dataset': ''},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location == '{}/?__no_cache__=True'.format(config.get('ckan.site_url'))
 
 
-@pytest.mark.usefixtures('with_plugins')
+@pytest.mark.usefixtures('clean_db', 'clean_index', 'with_plugins', 'with_request_context')
 class TestUnsubscribeAll(SubscribeBase):
     def test_basic(self):
         dataset = Dataset()
@@ -365,8 +388,12 @@ class TestUnsubscribeAll(SubscribeBase):
         response = self.app.get(
             '/subscribe/unsubscribe-all',
             params={'code': code},
-            status=200,
         )
+        if six.PY2:
+            response = response.follow()
+            assert response.status_int == 200
+        else:
+            assert response.status_code == 200
 
         assert 'You are no longer subscribed to notifications from CKAN' in response.body
 
@@ -375,7 +402,7 @@ class TestUnsubscribeAll(SubscribeBase):
             '/subscribe/unsubscribe-all',
             params={'code': ''},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location.startswith('{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
@@ -385,7 +412,7 @@ class TestUnsubscribeAll(SubscribeBase):
             '/subscribe/unsubscribe-all',
             params={'code': 'bad-code'},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location.startswith('{}/subscribe/request_manage_code'.format(config.get('ckan.site_url')))
@@ -397,8 +424,12 @@ class TestUnsubscribeAll(SubscribeBase):
         response = self.app.get(
             '/subscribe/unsubscribe-all',
             params={'code': code},
-            status=200
         )
+        if six.PY2:
+            response = response.follow()
+            assert response.status_int == 200
+        else:
+            assert response.status_code == 200
 
         assert 'Error unsubscribing: That user has no subscriptions' in response.body
 
@@ -408,7 +439,7 @@ class TestUnsubscribeAll(SubscribeBase):
             '/subscribe/unsubscribe',
             params={'code': code, 'dataset': ''},
             status=302,
-            follow_redirects=False
+            **self.follow_kw
         )
 
         assert response.location == '{}/?__no_cache__=True'.format(config.get('ckan.site_url'))
@@ -426,7 +457,12 @@ class TestRequestManageCode(SubscribeBase):
         )
 
         form = {'email': 'bob@example.com'}
-        self.app.post('/subscribe/request_manage_code', data=form, status=200)
+        response = self.app.post('/subscribe/request_manage_code', params=form)
+        if six.PY2:
+            response = response.follow()
+            assert response.status_int == 200
+        else:
+            assert response.status_code == 200
 
         mail_recipient.assert_called_once()
 

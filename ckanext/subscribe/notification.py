@@ -1,6 +1,7 @@
 import datetime
 from collections import defaultdict
 
+import six
 from ckan import model
 from ckan.model import Activity, Package, Group, Member
 from ckan.lib.dictization import model_dictize
@@ -308,8 +309,12 @@ def dictize_notifications(subscription_activities):
     for subscription, activities in subscription_activities.items():
         subscription_dict = \
             dictization.dictize_subscription(subscription, context)
-        activity_dicts = model_dictize.activity_list_dictize(
-            activities, context, include_data=True)
+        if six.PY3:
+            activity_dicts = model_dictize.activity_list_dictize(
+                activities, context, include_data=True)
+        else:
+            activity_dicts = model_dictize.activity_list_dictize(
+                activities, context)
         notifications_dictized.append(
             {
                 'subscription': subscription_dict,
