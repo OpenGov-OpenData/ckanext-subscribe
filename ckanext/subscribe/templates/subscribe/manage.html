@@ -3,16 +3,15 @@
 {% set ckan_29_or_higher = h.subscribe_ckan_version(h.ckan_version()) >= h.subscribe_ckan_version('2.9') %}
 
 {% if ckan_29_or_higher %}
-    {% set signup_url = h.url_for('subscribe.signup') %}
-    {% set update_url = h.url_for('subscribe.update') %}
-    {% set unsubscribe_url = h.url_for('subscribe.unsubscribe') %}
-    {% set unsubscribe_all_url = h.url_for('subscribe.unsubscribe_all') %}
-
+  {% set signup_url = h.url_for('subscribe.signup') %}
+  {% set update_url = h.url_for('subscribe.update') %}
+  {% set unsubscribe_url = h.url_for('subscribe.unsubscribe') %}
+  {% set unsubscribe_all_url = h.url_for('subscribe.unsubscribe_all') %}
 {% else %}
-    {% set signup_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='signup') %}
-    {% set update_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='update') %}
-    {% set unsubscribe_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='unsubscribe') %}
-    {% set unsubscribe_all_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='unsubscribe_all') %}
+  {% set signup_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='signup') %}
+  {% set update_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='update') %}
+  {% set unsubscribe_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='unsubscribe') %}
+  {% set unsubscribe_all_url = h.url_for(controller='ckanext.subscribe.controller:SubscribeController', action='unsubscribe_all') %}
 {% endif %}
 
 {% block styles %}
