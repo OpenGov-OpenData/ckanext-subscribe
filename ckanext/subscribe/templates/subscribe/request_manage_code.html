@@ -5,7 +5,7 @@
 {% block styles %}
   {{ super() }}
   {% set type = 'asset' if ckan_29_or_higher else 'resource' %}
-  {% snippet 'snippets/subscribe_' ~ type ~ '.html', name='subscribe/subscribe.html' %}
+  {% snippet 'snippets/subscribe_' ~ type ~ '.html' %}
 {% endblock styles %}
 
 {% if ckan_29_or_higher %}
