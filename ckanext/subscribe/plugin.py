@@ -1,5 +1,4 @@
 # encoding: utf-8
-import six
 from ckan import plugins
 from ckan.plugins import toolkit
 
@@ -7,10 +6,11 @@ from ckanext.subscribe import action, cli
 from ckanext.subscribe import auth
 from ckanext.subscribe import model as subscribe_model
 from ckanext.subscribe.controller import SubscribeController
+from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 
 from packaging.version import Version
 
-if six.PY3:
+if IS_CKAN_29_OR_HIGHER:
     from ckan.views.resource import Blueprint
 
 
@@ -21,7 +21,7 @@ class SubscribePlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IAuthFunctions)
     plugins.implements(plugins.ITemplateHelpers)
 
-    if six.PY3:
+    if IS_CKAN_29_OR_HIGHER:
         plugins.implements(plugins.IBlueprint)
         plugins.implements(plugins.IClick())
 

@@ -9,6 +9,7 @@ from ckan.lib.helpers import config
 from ckan.tests.factories import Dataset, Group, Organization
 
 from ckanext.subscribe import model as subscribe_model
+from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 from ckanext.subscribe.tests.factories import (
     Subscription,
     SubscriptionLowLevel,
@@ -71,7 +72,7 @@ class TestSignupSubmit(SubscribeBase):
         response = self.app.post(
             '/subscribe/signup',
             params={'email': 'bob@example.com'})  # no dataset or group
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             response = response.follow()
             assert response.status_int == 200
         else:
@@ -84,7 +85,7 @@ class TestSignupSubmit(SubscribeBase):
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'dataset': 'unknown'},
         )
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             response = response.follow(status=404)
         else:
             assert response.status_code == 404
@@ -96,7 +97,7 @@ class TestSignupSubmit(SubscribeBase):
             '/subscribe/signup',
             params={'email': 'bob@example.com', 'group': 'unknown'},
         )
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             response = response.follow(status=404)
         else:
             assert response.status_code == 404
@@ -213,7 +214,7 @@ class TestUpdate(SubscribeBase):
             params={'code': code, 'id': subscription['id'],
                     'frequency': 'daily'},
         )
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             response = response.follow(status=200)
         else:
             assert response.status_code == 200
@@ -230,7 +231,7 @@ class TestUpdate(SubscribeBase):
         response = self.app.get(
             '/subscribe/manage',
             params={'code': code})
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             assert response.status_int == 200
         else:
             assert response.status_code == 200
@@ -241,7 +242,7 @@ class TestUpdate(SubscribeBase):
             'id': subscription['id'],
         }
         post_response = self.app.post('/subscribe/update', params=form)
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             post_response = post_response.follow()
             assert post_response.status_int == 200
         else:
@@ -355,7 +356,7 @@ class TestUnsubscribe(SubscribeBase):
         response = self.app.get(
             '/subscribe/unsubscribe',
             params={'code': code, 'dataset': dataset['id']})
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             response = response.follow(status=200)
         else:
             assert response.status_code == 200
@@ -389,7 +390,7 @@ class TestUnsubscribeAll(SubscribeBase):
             '/subscribe/unsubscribe-all',
             params={'code': code},
         )
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             response = response.follow()
             assert response.status_int == 200
         else:
@@ -425,7 +426,7 @@ class TestUnsubscribeAll(SubscribeBase):
             '/subscribe/unsubscribe-all',
             params={'code': code},
         )
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             response = response.follow()
             assert response.status_int == 200
         else:
@@ -458,7 +459,7 @@ class TestRequestManageCode(SubscribeBase):
 
         form = {'email': 'bob@example.com'}
         response = self.app.post('/subscribe/request_manage_code', params=form)
-        if six.PY2:
+        if not IS_CKAN_29_OR_HIGHER:
             response = response.follow()
             assert response.status_int == 200
         else:

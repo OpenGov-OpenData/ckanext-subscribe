@@ -2,10 +2,9 @@ import sys
 import datetime
 import time
 
-import six
-
 from ckan import model
 import ckan.plugins as p
+from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 
 
 def initdb():
@@ -59,7 +58,7 @@ def delete_test_activity():
         model.Session.delete(activity)
 
 
-if six.PY2:
+if not IS_CKAN_29_OR_HIGHER:
     from ckan.lib import cli
 
     class subscribeCommand(cli.CkanCommand):
@@ -121,7 +120,7 @@ if six.PY2:
                 self.parser.error('Unrecognized command')
 
 
-if six.PY3:
+if IS_CKAN_29_OR_HIGHER:
     import click
 
     @click.group(name='subscribe')

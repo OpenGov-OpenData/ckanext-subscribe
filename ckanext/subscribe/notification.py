@@ -1,7 +1,6 @@
 import datetime
 from collections import defaultdict
 
-import six
 from ckan import model
 from ckan.model import Activity, Package, Group, Member
 from ckan.lib.dictization import model_dictize
@@ -9,6 +8,7 @@ from ckan.plugins import toolkit
 from ckan.lib.email_notifications import string_to_timedelta
 
 from ckanext.subscribe import dictization
+from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 from ckanext.subscribe.model import (
     Subscription,
     Subscribe,
@@ -309,7 +309,7 @@ def dictize_notifications(subscription_activities):
     for subscription, activities in subscription_activities.items():
         subscription_dict = \
             dictization.dictize_subscription(subscription, context)
-        if six.PY3:
+        if IS_CKAN_29_OR_HIGHER:
             activity_dicts = model_dictize.activity_list_dictize(
                 activities, context, include_data=True)
         else:

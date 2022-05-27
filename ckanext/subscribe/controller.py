@@ -1,7 +1,6 @@
 # encoding: utf-8
 
 import re
-import six
 
 import ckan.lib.helpers as h
 from ckan import model
@@ -21,7 +20,7 @@ from ckanext.subscribe import email_auth
 from ckanext.subscribe import model as subscribe_model
 from ckanext.subscribe.constants import IS_CKAN_29_OR_HIGHER
 
-if six.PY2:
+if not IS_CKAN_29_OR_HIGHER:
     from ckan.common import _ as ugettext
     from ckan.lib.base import BaseController
 else:
@@ -417,7 +416,7 @@ class _SubscribeController:
             return redirect_to(redirect_url, **kwargs)
 
 
-if six.PY2:
+if not IS_CKAN_29_OR_HIGHER:
     class SubscribeController(BaseController, _SubscribeController):
         pass
 else:
