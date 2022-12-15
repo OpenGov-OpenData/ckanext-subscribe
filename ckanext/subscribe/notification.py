@@ -142,10 +142,12 @@ def get_objects_subscribed_to(subscription_frequency):
     objects_subscribed_to = defaultdict(list)  # {object_id: [subscriptions]}
     # direct subscriptions - i.e. datasets, orgs & groups
     for subscription in model.Session.query(Subscription) \
+            .filter(Subscription.verified.is_(True)) \
             .filter(Subscription.frequency == subscription_frequency).all():
         objects_subscribed_to[subscription.object_id].append(subscription)
     # also include the datasets attached to the subscribed orgs
     for subscription, package_id in model.Session.query(Subscription, Package.id) \
+            .filter(Subscription.verified.is_(True)) \
             .filter(Subscription.frequency == subscription_frequency) \
             .join(Group, Group.id == Subscription.object_id) \
             .filter(Group.state == 'active') \
@@ -155,6 +157,7 @@ def get_objects_subscribed_to(subscription_frequency):
         objects_subscribed_to[package_id].append(subscription)
     # also include the datasets attached to the subscribed orgs
     for subscription, package_id in model.Session.query(Subscription, Package.id) \
+            .filter(Subscription.verified.is_(True)) \
             .filter(Subscription.frequency == subscription_frequency) \
             .join(Group, Group.id == Subscription.object_id) \
             .filter(Group.state == 'active') \
