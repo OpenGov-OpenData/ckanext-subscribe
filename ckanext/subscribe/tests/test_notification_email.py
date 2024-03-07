@@ -47,7 +47,7 @@ class TestSendNotificationEmail(SubscribeBase):
         body = mail_recipient.call_args[1]['body']
         print(body)
         assert dataset['title'] in body
-        assert'{}/dataset/{}'.format(config.get('ckan.site_url'), dataset['id']) in body
+        assert '{}/dataset/{}'.format(config.get('ckan.site_url'), dataset['id']) in body
         assert 'new dataset' in body
         body = mail_recipient.call_args[1]['body_html']
         print(body)
