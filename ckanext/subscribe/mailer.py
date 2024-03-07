@@ -60,7 +60,6 @@ def _mail_recipient(recipient_name, recipient_email,
 
 def _mail_payload(msg, mail_from, recipient_email):
     # Send the email using Python's smtplib.
-    smtp_connection = smtplib.SMTP()
     if 'smtp.test_server' in config:
         # If 'smtp.test_server' is configured we assume we're running tests,
         # and don't use the smtp.server, starttls, user, password etc. options.
@@ -76,8 +75,8 @@ def _mail_payload(msg, mail_from, recipient_email):
         smtp_password = config.get('smtp.password')
 
     try:
-        smtp_connection.connect(smtp_server)
-    except socket.error as e:
+        smtp_connection = smtplib.SMTP(smtp_server)
+    except (socket.error, smtplib.SMTPConnectError) as e:
         log.exception(e)
         raise MailerException('SMTP server could not be connected to: "%s" %s'
                               % (smtp_server, e))
