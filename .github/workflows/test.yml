@@ -26,7 +26,7 @@ jobs:
   test:
     strategy:
       matrix:
-        ckan-version: [2.9, 2.8, 2.7]
+        ckan-version: [2.9]
       fail-fast: false
 
     name: CKAN ${{ matrix.ckan-version }}
@@ -35,7 +35,7 @@ jobs:
       image: openknowledge/ckan-dev:${{ matrix.ckan-version }}
     services:
       solr:
-        image: ckan/ckan-solr-dev:${{ matrix.ckan-version }}
+        image: ckan/ckan-solr:${{ matrix.ckan-version }}
       postgres:
         image: ckan/ckan-postgres-dev:${{ matrix.ckan-version }}
         env:
@@ -54,20 +54,13 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install requirements
       run: |
-        pip install -r requirements.txt -r dev-requirements.txt -e .
-
+        pip install -r requirements.txt
+        pip install -r dev-requirements.txt
+        pip install -e .
     - name: Setup extension (CKAN >= 2.9)
-      if: ${{ matrix.ckan-version == '2.9' }}
       run: |
         ckan -c git_action_test.ini db init
         ckan -c git_action_test.ini subscribe initdb
-
-    - name: Setup extension (CKAN 2.7)
-      if: ${{ matrix.ckan-version != '2.9'  }}
-      run: |
-        paster --plugin=ckan db init -c git_action_test.ini
-        paster --plugin=ckanext-subscribe subscribe initdb -c git_action_test.ini
-
     - name: Run tests
       run: |
         pytest --ckan-ini=git_action_test.ini --cov=ckanext.subscribe --cov-fail-under=${CODE_COVERAGE_THRESHOLD_REQUIRED} --disable-warnings ckanext/subscribe/tests
