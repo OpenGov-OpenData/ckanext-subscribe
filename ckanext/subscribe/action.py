@@ -51,7 +51,7 @@ def subscribe_signup(context, data_dict):
 
     data = {
         'email': data_dict['email'],
-        'frequency': data_dict.get('frequency', Frequency.IMMEDIATE.value),
+        'frequency': data_dict.get('frequency', Frequency.DAILY.value),
     }
     if data_dict.get('dataset_id'):
         data['object_type'] = 'dataset'
