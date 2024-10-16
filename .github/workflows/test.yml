@@ -63,4 +63,15 @@ jobs:
         ckan -c git_action_test.ini subscribe initdb
     - name: Run tests
       run: |
-        pytest --ckan-ini=git_action_test.ini --cov=ckanext.subscribe --cov-fail-under=${CODE_COVERAGE_THRESHOLD_REQUIRED} --disable-warnings ckanext/subscribe/tests
+        pytest --ckan-ini=git_action_test.ini --cov=ckanext.subscribe --cov-report xml:coverage.xml --cov-fail-under=${CODE_COVERAGE_THRESHOLD_REQUIRED} --disable-warnings ckanext/subscribe/tests
+    - name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@master
+      with: 
+        args: >
+          -Dsonar.application=open-data
+          -Dsonar.projectKey=ckanext-subscribe
+          -Dsonar.tests=ckanext/subscribe/tests/
+          -Dsonar.python.coverage.reportPaths=coverage.xml
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_API_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_EXTERNAL_URL }}
