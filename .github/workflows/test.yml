@@ -71,6 +71,7 @@ jobs:
           -Dsonar.projectKey=ckanext-subscribe
           -Dsonar.sources=ckanext/subscribe
           -Dsonar.tests=ckanext/subscribe/tests
+          -Dsonar.exclusions=ckanext/subscribe/tests/**
           -Dsonar.python.coverage.reportPaths=coverage.xml
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_API_TOKEN }}
