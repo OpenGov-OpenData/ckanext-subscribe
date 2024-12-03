@@ -14,6 +14,7 @@ from ckan.plugins.toolkit import (
     render,
     redirect_to,
 )
+import ckan.plugins.toolkit as tk
 from ckan.lib.mailer import MailerException
 
 from ckanext.subscribe import email_auth
@@ -53,6 +54,16 @@ class _SubscribeController:
             'group_id': cls.get_value_from_request_data('group'),
             'organization_id': cls.get_value_from_request_data('organization'),
         }
+
+        skip_verification = cls.get_value_from_request_data('skip_verification'),
+        if skip_verification == 'true':
+            try:
+                currentcontext = {'model': model, 'user': tk.c.user}
+                data_dict['skip_verification'] = skip_verification
+                tk.check_access('sysadmin', currentcontext, {})
+            except tk.NotAuthorized:
+                tk.abort(403, tk._('Need to be system administrator to administer'))
+
         context = {
             'model': model,
             'session': model.Session,
